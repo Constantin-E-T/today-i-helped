@@ -1,5 +1,45 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Database Setup
+
+This project uses PostgreSQL with Docker for development. Make sure you have Docker installed.
+
+### Start the database
+
+```bash
+docker compose up -d
+```
+
+### Stop the database
+
+```bash
+docker compose down
+```
+
+### Reset the database (deletes all data)
+
+```bash
+docker compose down -v
+```
+
+### View database logs
+
+```bash
+docker compose logs -f postgres
+```
+
+### Create tables
+
+```bash
+npx prisma db push
+```
+
+### Open Prisma Studio (database GUI)
+
+```bash
+npx prisma studio
+```
+
 ## Getting Started
 
 First, run the development server:

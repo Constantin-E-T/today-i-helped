@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,4 +8,142 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Category {
+  PEOPLE
+  ANIMALS
+  ENVIRONMENT
+  COMMUNITY
+}
+
+enum Difficulty {
+  EASY // 2 minutes
+  MEDIUM // 5 minutes
+}
+
+// User model with auto-generated username and stats
+model User {
+  id         String @id @default(cuid())
+  username   String @unique @db.VarChar(50)
+  avatarSeed String @db.VarChar(100)
+
+  // Stats
+  totalActions  Int @default(0)
+  currentStreak Int @default(0)
+  longestStreak Int @default(0)
+  clapsReceived Int @default(0)
+
+  // Timestamps
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  // Relations
+  actions Action[]
+  claps   Clap[]
+
+  @@index([username])
+  @@index([createdAt])
+}
+
+// Challenge model for daily actions
+model Challenge {
+  id         String     @id @default(cuid())
+  text       String     @db.Text
+  category   Category
+  difficulty Difficulty
+
+  // Stats
+  timesUsed    Int     @default(0)
+  averageClaps Float   @default(0)
+  isActive     Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  actions Action[]
+
+  @@index([category])
+  @@index([difficulty])
+  @@index([isActive])
+}
+
+// Action model - completed challenges in public feed
+model Action {
+  id          String  @id @default(cuid())
+  userId      String
+  challengeId String? // Optional if user writes custom text
+
+  // Optional fields
+  customText String? @db.Text
+  location   String? @db.VarChar(100)
+
+  // Required fields
+  category   Category
+  clapsCount Int      @default(0)
+
+  // Spam protection
+  ipAddress String @db.VarChar(45) // IPv6 max length
+  userAgent String @db.Text
+
+  // Timestamps
+  completedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge Challenge? @relation(fields: [challengeId], references: [id], onDelete: SetNull)
+  claps     Clap[]
+
+  // Indexes for common queries
+  @@index([userId])
+  @@index([challengeId])
+  @@index([completedAt(sort: Desc)]) // For feed sorting
+  @@index([category])
+  @@index([location])
+}
+
+// Clap model - like system with duplicate prevention
+model Clap {
+  id       String @id @default(cuid())
+  actionId String
+  userId   String
+
+  // Timestamp
+  createdAt DateTime @default(now())
+
+  // Relations
+  action Action @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Prevent duplicate claps
+  @@unique([actionId, userId])
+  @@index([actionId])
+  @@index([userId])
+}
+
+// DailyStats model - aggregated counters for analytics
+model DailyStats {
+  id   String   @id @default(cuid())
+  date DateTime @db.Date
+  hour Int? // Optional for hourly breakdown (0-23)
+
+  // Total counters
+  totalActions Int @default(0)
+
+  // Category breakdown
+  peopleActions      Int @default(0)
+  animalsActions     Int @default(0)
+  environmentActions Int @default(0)
+  communityActions   Int @default(0)
+
+  // Location breakdown (flexible JSON field)
+  locationBreakdown Json @default("{}")
+
+  // Unique constraint for daily or hourly stats
+  @@unique([date, hour])
+  @@index([date(sort: Desc)])
 }
