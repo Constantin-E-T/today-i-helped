@@ -2,6 +2,8 @@
 
 import prisma from '@/lib/prisma'
 import logger from '@/lib/logger'
+import { generateRecoveryCode, normalizeRecoveryCode } from '@/lib/recovery-code'
+import { z } from 'zod'
 import type { User } from '@prisma/client'
 
 // Type definitions for server action responses
@@ -16,6 +18,19 @@ type GetUserResponse =
 type UpdateUserResponse =
   | { success: true }
   | { success: false; error: string }
+
+// Zod schemas for input validation
+const RecoveryCodeSchema = z.string().min(1, 'Recovery code is required').transform((val) => {
+  // Cast to string to prevent operator injection
+  const stringVal = String(val)
+  // Normalize the recovery code
+  return normalizeRecoveryCode(stringVal)
+})
+
+const UserIdSchema = z.string().min(1, 'User ID is required').transform((val) => {
+  // Cast to string to prevent operator injection
+  return String(val)
+})
 
 // Username generation constants
 const ADJECTIVES = ['Happy', 'Kind', 'Brave', 'Gentle', 'Cheerful', 'Bright', 'Caring', 'Helpful']
@@ -47,8 +62,8 @@ function isPrismaError(error: unknown): error is { code: string; meta?: { target
 }
 
 /**
- * Create a new user with auto-generated username
- * Retries if username collision occurs
+ * Create a new user with auto-generated username and recovery code
+ * Retries if username or recovery code collision occurs
  */
 export async function createUser(): Promise<CreateUserResponse> {
   try {
@@ -58,22 +73,30 @@ export async function createUser(): Promise<CreateUserResponse> {
     while (attempts < maxRetries) {
       const username = generateUsername()
       const avatarSeed = generateAvatarSeed()
+      const recoveryCode = generateRecoveryCode()
 
       try {
-        // Attempt to create user with generated username
+        // Attempt to create user with generated username and recovery code
         const user = await prisma.user.create({
           data: {
             username,
             avatarSeed,
+            recoveryCode,
           },
         })
 
+        logger.info({ userId: user.id, username: user.username }, 'User created successfully')
         return { success: true, data: user }
       } catch (error: unknown) {
         // Check if error is due to unique constraint violation
-        if (isPrismaError(error) && error.code === 'P2002' && error.meta?.target?.includes('username')) {
-          attempts++
-          continue // Retry with new username
+        if (isPrismaError(error) && error.code === 'P2002') {
+          const target = error.meta?.target as string[] | undefined
+
+          if (target?.includes('username') || target?.includes('recoveryCode')) {
+            attempts++
+            logger.debug({ attempt: attempts }, 'Retrying user creation due to collision')
+            continue // Retry with new username and/or recovery code
+          }
         }
 
         // If it's a different error, log and throw it
@@ -83,6 +106,7 @@ export async function createUser(): Promise<CreateUserResponse> {
     }
 
     // If we exhausted all retries
+    logger.error('Exhausted all retries for user creation')
     return {
       success: false,
       error: 'Failed to generate unique username. Please try again.'
@@ -146,6 +170,138 @@ export async function updateUserLastSeen(userId: string): Promise<UpdateUserResp
     return {
       success: false,
       error: 'Failed to update user activity. Please try again later.'
+    }
+  }
+}
+
+/**
+ * Get user by recovery code with input validation
+ * Implements security best practices:
+ * - Input validation with Zod
+ * - Type casting to prevent operator injection
+ * - Generic error messages to prevent enumeration attacks
+ */
+export async function getUserByRecoveryCode(code: string): Promise<GetUserResponse> {
+  try {
+    // Validate and normalize the recovery code
+    const validationResult = RecoveryCodeSchema.safeParse(code)
+
+    if (!validationResult.success) {
+      logger.warn({ error: validationResult.error }, 'Invalid recovery code format')
+      // Return generic error to prevent enumeration
+      return {
+        success: false,
+        error: 'Invalid recovery code'
+      }
+    }
+
+    const normalizedCode = validationResult.data
+
+    // Check if normalization failed (code format invalid)
+    if (!normalizedCode) {
+      logger.warn({ code }, 'Recovery code normalization failed')
+      return {
+        success: false,
+        error: 'Invalid recovery code'
+      }
+    }
+
+    // Query database with normalized code
+    const user = await prisma.user.findUnique({
+      where: { recoveryCode: normalizedCode },
+    })
+
+    if (!user) {
+      // Return generic error to prevent enumeration
+      logger.warn({ code: normalizedCode }, 'User not found for recovery code')
+      return {
+        success: false,
+        error: 'Invalid recovery code'
+      }
+    }
+
+    logger.info({ userId: user.id }, 'User authenticated via recovery code')
+    return { success: true, data: user }
+  } catch (error: unknown) {
+    logger.error({ error }, 'Error in getUserByRecoveryCode function')
+    return {
+      success: false,
+      error: 'Authentication failed. Please try again later.'
+    }
+  }
+}
+
+/**
+ * Regenerate recovery code for a user
+ * Retries if recovery code collision occurs
+ */
+export async function regenerateRecoveryCode(userId: string): Promise<CreateUserResponse> {
+  try {
+    // Validate user ID
+    const validationResult = UserIdSchema.safeParse(userId)
+
+    if (!validationResult.success) {
+      logger.warn({ error: validationResult.error }, 'Invalid user ID')
+      return {
+        success: false,
+        error: 'Invalid user ID'
+      }
+    }
+
+    const validatedUserId = validationResult.data
+    const maxRetries = 10
+    let attempts = 0
+
+    while (attempts < maxRetries) {
+      const recoveryCode = generateRecoveryCode()
+
+      try {
+        // Attempt to update user with new recovery code
+        const user = await prisma.user.update({
+          where: { id: validatedUserId },
+          data: { recoveryCode },
+        })
+
+        logger.info({ userId: user.id }, 'Recovery code regenerated successfully')
+        return { success: true, data: user }
+      } catch (error: unknown) {
+        // Check if error is due to recovery code collision
+        if (isPrismaError(error) && error.code === 'P2002') {
+          const target = error.meta?.target as string[] | undefined
+
+          if (target?.includes('recoveryCode')) {
+            attempts++
+            logger.debug({ attempt: attempts }, 'Retrying recovery code generation due to collision')
+            continue // Retry with new recovery code
+          }
+        }
+
+        // Check if error is due to user not found
+        if (isPrismaError(error) && error.code === 'P2025') {
+          logger.warn({ userId: validatedUserId }, 'User not found for recovery code regeneration')
+          return {
+            success: false,
+            error: 'User not found'
+          }
+        }
+
+        // If it's a different error, log and throw it
+        logger.error({ error }, 'Failed to regenerate recovery code in database')
+        throw error
+      }
+    }
+
+    // If we exhausted all retries
+    logger.error({ userId: validatedUserId }, 'Exhausted all retries for recovery code regeneration')
+    return {
+      success: false,
+      error: 'Failed to generate unique recovery code. Please try again.'
+    }
+  } catch (error: unknown) {
+    logger.error({ error }, 'Error in regenerateRecoveryCode function')
+    return {
+      success: false,
+      error: 'Failed to regenerate recovery code. Please try again later.'
     }
   }
 }

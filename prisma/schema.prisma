@@ -25,9 +25,10 @@ enum Difficulty {
 
 // User model with auto-generated username and stats
 model User {
-  id         String @id @default(cuid())
-  username   String @unique @db.VarChar(50)
-  avatarSeed String @db.VarChar(100)
+  id           String  @id @default(cuid())
+  username     String  @unique @db.VarChar(50)
+  avatarSeed   String  @db.VarChar(100)
+  recoveryCode String? @unique @db.VarChar(14) // Format: XXXX-XXXX-XXXX
 
   // Stats
   totalActions  Int @default(0)
@@ -45,6 +46,7 @@ model User {
 
   @@index([username])
   @@index([createdAt])
+  @@index([recoveryCode])
 }
 
 // Challenge model for daily actions
