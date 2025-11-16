@@ -39,6 +39,13 @@ function generateAvatarSeed(): string {
 }
 
 /**
+ * Type guard to check if error is a Prisma error
+ */
+function isPrismaError(error: unknown): error is { code: string; meta?: any } {
+  return typeof error === 'object' && error !== null && 'code' in error
+}
+
+/**
  * Create a new user with auto-generated username
  * Retries if username collision occurs
  */
@@ -61,9 +68,9 @@ export async function createUser(): Promise<CreateUserResponse> {
         })
 
         return { success: true, data: user }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Check if error is due to unique constraint violation
-        if (error.code === 'P2002' && error.meta?.target?.includes('username')) {
+        if (isPrismaError(error) && error.code === 'P2002' && error.meta?.target?.includes('username')) {
           attempts++
           continue // Retry with new username
         }
@@ -78,8 +85,7 @@ export async function createUser(): Promise<CreateUserResponse> {
       success: false,
       error: 'Failed to generate unique username. Please try again.'
     }
-  } catch (error) {
-    console.error('Error creating user:', error)
+  } catch (error: unknown) {
     return {
       success: false,
       error: 'Failed to create user. Please try again later.'
@@ -104,8 +110,7 @@ export async function getUserById(id: string): Promise<GetUserResponse> {
     }
 
     return { success: true, data: user }
-  } catch (error) {
-    console.error('Error fetching user:', error)
+  } catch (error: unknown) {
     return {
       success: false,
       error: 'Failed to fetch user. Please try again later.'
@@ -124,16 +129,15 @@ export async function updateUserLastSeen(userId: string): Promise<UpdateUserResp
     })
 
     return { success: true }
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Check if error is due to user not found
-    if (error.code === 'P2025') {
+    if (isPrismaError(error) && error.code === 'P2025') {
       return {
         success: false,
         error: 'User not found'
       }
     }
 
-    console.error('Error updating user last seen:', error)
     return {
       success: false,
       error: 'Failed to update user activity. Please try again later.'
