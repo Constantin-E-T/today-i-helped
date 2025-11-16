@@ -1,6 +1,7 @@
 'use server'
 
 import prisma from '@/lib/prisma'
+import logger from '@/lib/logger'
 import type { User } from '@prisma/client'
 
 // Type definitions for server action responses
@@ -75,7 +76,8 @@ export async function createUser(): Promise<CreateUserResponse> {
           continue // Retry with new username
         }
 
-        // If it's a different error, throw it
+        // If it's a different error, log and throw it
+        logger.error({ error }, 'Failed to create user in database')
         throw error
       }
     }
@@ -86,6 +88,7 @@ export async function createUser(): Promise<CreateUserResponse> {
       error: 'Failed to generate unique username. Please try again.'
     }
   } catch (error: unknown) {
+    logger.error({ error }, 'Error in createUser function')
     return {
       success: false,
       error: 'Failed to create user. Please try again later.'
@@ -111,6 +114,7 @@ export async function getUserById(id: string): Promise<GetUserResponse> {
 
     return { success: true, data: user }
   } catch (error: unknown) {
+    logger.error({ error }, 'Error in getUserById function')
     return {
       success: false,
       error: 'Failed to fetch user. Please try again later.'
@@ -138,6 +142,7 @@ export async function updateUserLastSeen(userId: string): Promise<UpdateUserResp
       }
     }
 
+    logger.error({ error }, 'Error in updateUserLastSeen function')
     return {
       success: false,
       error: 'Failed to update user activity. Please try again later.'
