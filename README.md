@@ -24,8 +24,8 @@ Today I Helped is a platform that encourages daily acts of kindness through gami
 
 ✅ **Database**: PostgreSQL 17 in Docker
 ✅ **Schema**: All models created
-🚧 **Server Actions**: Phase 2/4 - User Actions (in progress)
-🔜 **UI Components**
+✅ **Server Actions**: Complete
+🚧 **UI Components**: Phase 3 (in progress)
 🔜 **Integration**
 
 ## Getting Started
