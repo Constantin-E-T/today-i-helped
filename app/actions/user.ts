@@ -42,7 +42,7 @@ function generateAvatarSeed(): string {
 /**
  * Type guard to check if error is a Prisma error
  */
-function isPrismaError(error: unknown): error is { code: string; meta?: any } {
+function isPrismaError(error: unknown): error is { code: string; meta?: { target?: string[] } } {
   return typeof error === 'object' && error !== null && 'code' in error
 }
 
