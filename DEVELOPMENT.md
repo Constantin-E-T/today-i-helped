@@ -125,6 +125,30 @@ model DailyStats {
 
 **Purpose**: Track platform growth and category popularity
 
+## Authentication System - Recovery Code Approach
+
+### Philosophy
+
+- **Frictionless first-time experience**: Auto-generated username on first visit
+- **Multi-device support**: Users can claim their username on new devices via recovery code
+- **No email or passwords required**: Minimal friction, maximum accessibility
+- **Trust-first**: User owns their username via recovery code
+
+### Flow
+
+1. **First visit**: Auto-create user, show recovery code (e.g., "BEAR-MOON-5847")
+2. **Save code**: Store in cookie + user can screenshot/write down
+3. **New device**: "Claim username" with username + recovery code
+4. **Validates**: Check recovery code and set cookie
+5. **User continues**: Same identity across all devices
+
+### Implementation Needed
+
+- Add `recoveryCode` field to User model (hashed)
+- Recovery code generator (3 words + 4 digits format)
+- Cookie middleware (auto-create or validate)
+- Recovery UI component
+
 ## Development Phases
 
 ### Phase 1: Database Setup ✅ COMPLETE
@@ -164,19 +188,42 @@ model DailyStats {
 - [x] `hasUserClapped(actionId, userId)` - Check clap status
 - [x] `updateClapCounts()` - Sync clap totals
 
-### Phase 3: UI Components 🚧 IN PROGRESS
+### Phase 3: Authentication System 🚧 IN PROGRESS
 
-- [ ] Homepage with daily challenge
+#### Task 1: Update User Schema
+- [ ] Add `recoveryCode` field to User model (hashed)
+- [ ] Create and apply database migration
+
+#### Task 2: Create Recovery Code Generator
+- [ ] Build generator for 3-word + 4-digit format (e.g., "BEAR-MOON-5847")
+- [ ] Implement hashing function for secure storage
+
+#### Task 3: Create Auth Utilities
+- [ ] Cookie management functions (set, get, validate)
+- [ ] User session helpers
+
+#### Task 4: Create Middleware
+- [ ] Auto-create users on first visit
+- [ ] Validate existing sessions
+- [ ] Handle recovery code claims
+
+#### Task 5: Create Recovery UI
+- [ ] Recovery code display component
+- [ ] Username claim form
+- [ ] Recovery code validation feedback
+
+### Phase 4: UI Components 🔜
+
+- [x] Homepage with daily challenge ✅
 - [ ] Community feed
 - [ ] Action submission form
 - [ ] User profile/stats
 - [ ] Clap button with animation
 - [ ] Streak display
 
-### Phase 4: Integration 🔜
+### Phase 5: Integration & Polish 🔜
 
 - [ ] Connect UI to Server Actions
-- [ ] Implement cookie-based auth
 - [ ] Add optimistic UI updates
 - [ ] Error handling and loading states
 - [ ] Mobile responsiveness
