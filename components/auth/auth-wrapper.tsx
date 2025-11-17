@@ -12,7 +12,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { AuthModal } from '@/components/auth/auth-modal'
 import { RecoveryCodeDisplay } from '@/components/auth/recovery-code-display'
-import { createUser, getUserByRecoveryCode } from '@/app/actions/user'
+import { Navbar } from '@/components/layout/navbar'
+import { createUser, getUserByRecoveryCode, getUserById } from '@/app/actions/user'
 import {
   getUserIdFromCookie,
   setUserIdCookie,
@@ -28,7 +29,7 @@ type AuthState =
   | { status: 'loading' }
   | { status: 'unauthenticated' }
   | { status: 'new-user'; userId: string; username: string; recoveryCode: string }
-  | { status: 'authenticated'; userId: string }
+  | { status: 'authenticated'; userId: string; username: string }
 
 /**
  * Authentication Wrapper Component
@@ -44,13 +45,30 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
 
   // Check for existing auth on mount
   useEffect(() => {
-    const userId = getUserIdFromCookie()
+    async function checkAuth() {
+      const userId = getUserIdFromCookie()
 
-    if (userId) {
-      setAuthState({ status: 'authenticated', userId })
-    } else {
-      setAuthState({ status: 'unauthenticated' })
+      if (userId) {
+        // Fetch user data to get username
+        const result = await getUserById(userId)
+
+        if (result.success) {
+          setAuthState({
+            status: 'authenticated',
+            userId: result.data.id,
+            username: result.data.username
+          })
+        } else {
+          // If user not found, clear cookie and show unauthenticated
+          clearUserIdCookie()
+          setAuthState({ status: 'unauthenticated' })
+        }
+      } else {
+        setAuthState({ status: 'unauthenticated' })
+      }
     }
+
+    checkAuth()
   }, [])
 
   const handleGetStarted = async () => {
@@ -77,7 +95,11 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     if (authState.status === 'new-user') {
       // User confirmed they saved the recovery code
       setUserIdCookie(authState.userId)
-      setAuthState({ status: 'authenticated', userId: authState.userId })
+      setAuthState({
+        status: 'authenticated',
+        userId: authState.userId,
+        username: authState.username
+      })
     }
   }
 
@@ -86,7 +108,11 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
 
     if (result.success) {
       setUserIdCookie(result.data.id)
-      setAuthState({ status: 'authenticated', userId: result.data.id })
+      setAuthState({
+        status: 'authenticated',
+        userId: result.data.id,
+        username: result.data.username
+      })
       setShowSignInModal(false)
       return { success: true }
     } else {
@@ -179,6 +205,11 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     )
   }
 
-  // Authenticated state - show children (main app)
-  return <>{children}</>
+  // Authenticated state - show navbar and children (main app)
+  return (
+    <>
+      <Navbar username={authState.username} />
+      {children}
+    </>
+  )
 }
