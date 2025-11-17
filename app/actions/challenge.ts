@@ -126,6 +126,55 @@ export async function getRandomChallenge(): Promise<GetChallengeResponse> {
   }
 }
 
+/**
+ * Get filtered challenges with optional category and difficulty filters
+ * Supports combined filtering and returns multiple random challenges
+ */
+export async function getFilteredChallenges(params: {
+  category?: Category
+  difficulty?: Difficulty
+  limit?: number
+  random?: boolean
+}): Promise<GetChallengesResponse> {
+  try {
+    const { category, difficulty, limit = 4, random = false } = params
+
+    const challenges = await prisma.challenge.findMany({
+      where: {
+        isActive: true,
+        ...(category && { category }),
+        ...(difficulty && { difficulty }),
+      },
+      orderBy: random
+        ? undefined
+        : [{ category: 'asc' }, { difficulty: 'asc' }],
+    })
+
+    if (challenges.length === 0) {
+      return { success: true, data: [] }
+    }
+
+    // If random is true, shuffle and take limit
+    if (random) {
+      const shuffled = challenges
+        .map((challenge) => ({ challenge, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ challenge }) => challenge)
+
+      return { success: true, data: shuffled.slice(0, limit) }
+    }
+
+    // Otherwise just take limit
+    return { success: true, data: challenges.slice(0, limit) }
+  } catch (error: unknown) {
+    logger.error({ error, params }, 'Error in getFilteredChallenges function')
+    return {
+      success: false,
+      error: 'Failed to fetch filtered challenges. Please try again later.',
+    }
+  }
+}
+
 // ==================== ADMIN CHALLENGE MANAGEMENT ====================
 
 type CreateChallengeResponse =
