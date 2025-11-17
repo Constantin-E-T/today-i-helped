@@ -15,7 +15,15 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { Menu, Home, Users, Trophy, Settings, LogOut } from "lucide-react";
+import {
+  Menu,
+  Home,
+  Users,
+  Trophy,
+  Settings,
+  LogOut,
+  Sparkles,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MobileNavProps {
@@ -36,6 +44,12 @@ const navigationItems: NavItem[] = [
     href: "/",
     icon: Home,
     description: "Discover challenges to complete",
+  },
+  {
+    title: "Action Flow",
+    href: "/action-flow",
+    icon: Sparkles,
+    description: "Browse or create actions",
   },
   {
     title: "Feed",

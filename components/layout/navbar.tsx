@@ -1,12 +1,12 @@
-'use client'
+"use client";
 
-import * as React from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { MobileNav } from '@/components/layout/mobile-nav'
-import { UserAvatar } from '@/components/ui/user-avatar'
-import { ThemeToggle } from '@/components/ui/theme-toggle'
-import { Button } from '@/components/ui/button'
+import * as React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { MobileNav } from "@/components/layout/mobile-nav";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,27 +14,36 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Home, Users, Trophy, Settings, LogOut, Heart } from 'lucide-react'
-import { cn } from '@/lib/utils'
+} from "@/components/ui/dropdown-menu";
+import {
+  Home,
+  Users,
+  Trophy,
+  Settings,
+  LogOut,
+  Heart,
+  Sparkles,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface NavbarProps {
-  username: string
-  onSignOut?: () => void
+  username: string;
+  onSignOut?: () => void;
 }
 
 interface NavItem {
-  title: string
-  href: string
-  icon: React.ElementType
+  title: string;
+  href: string;
+  icon: React.ElementType;
 }
 
 const navigationItems: NavItem[] = [
-  { title: 'Home', href: '/', icon: Home },
-  { title: 'Feed', href: '/feed', icon: Users },
-  { title: 'Achievements', href: '/achievements', icon: Trophy },
-  { title: 'Settings', href: '/settings', icon: Settings },
-]
+  { title: "Home", href: "/", icon: Home },
+  { title: "Action Flow", href: "/action-flow", icon: Sparkles },
+  { title: "Feed", href: "/feed", icon: Users },
+  { title: "Achievements", href: "/achievements", icon: Trophy },
+  { title: "Settings", href: "/settings", icon: Settings },
+];
 
 /**
  * Navbar Component
@@ -45,7 +54,7 @@ const navigationItems: NavItem[] = [
  * - User dropdown menu on desktop
  */
 export function Navbar({ username, onSignOut }: NavbarProps) {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -69,24 +78,21 @@ export function Navbar({ username, onSignOut }: NavbarProps) {
           {/* Desktop Navigation Links */}
           <div className="hidden md:flex items-center gap-1 ml-6">
             {navigationItems.map((item) => {
-              const Icon = item.icon
-              const isActive = pathname === item.href
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
 
               return (
                 <Link key={item.href} href={item.href}>
                   <Button
-                    variant={isActive ? 'secondary' : 'ghost'}
+                    variant={isActive ? "secondary" : "ghost"}
                     size="sm"
-                    className={cn(
-                      'gap-2',
-                      isActive && 'font-medium'
-                    )}
+                    className={cn("gap-2", isActive && "font-medium")}
                   >
                     <Icon className="h-4 w-4" />
                     <span className="hidden lg:inline">{item.title}</span>
                   </Button>
                 </Link>
-              )
+              );
             })}
           </div>
         </div>
@@ -130,7 +136,10 @@ export function Navbar({ username, onSignOut }: NavbarProps) {
               {onSignOut && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={onSignOut} className="cursor-pointer">
+                  <DropdownMenuItem
+                    onClick={onSignOut}
+                    className="cursor-pointer"
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Sign Out</span>
                   </DropdownMenuItem>
@@ -146,5 +155,5 @@ export function Navbar({ username, onSignOut }: NavbarProps) {
         </div>
       </div>
     </nav>
-  )
+  );
 }
