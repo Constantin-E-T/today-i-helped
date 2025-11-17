@@ -57,7 +57,7 @@ export function Navbar({ username, onSignOut }: NavbarProps) {
   const pathname = usePathname();
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Left Section */}
         <div className="flex items-center gap-3 md:gap-6">
@@ -154,6 +154,6 @@ export function Navbar({ username, onSignOut }: NavbarProps) {
           </div>
         </div>
       </div>
-    </nav>
+    </header>
   );
 }
