@@ -82,3 +82,8 @@ export function formatDateTime(date: Date | string): string {
     minute: '2-digit',
   })
 }
+
+/**
+ * Alias for formatRelativeTime (for compatibility with date-fns naming)
+ */
+export const formatDistanceToNow = formatRelativeTime
