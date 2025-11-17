@@ -1,13 +1,13 @@
-import { AuthWrapper } from '@/components/auth/auth-wrapper'
-import { MainLayout } from '@/components/layout/main-layout'
-import { StatsOverview } from '@/components/dashboard/stats-overview'
-import { RecentActions } from '@/components/dashboard/recent-actions'
-import { StreakCounter } from '@/components/dashboard/streak-counter'
-import { QuickActions } from '@/components/dashboard/quick-actions'
-import { AchievementShowcase } from '@/components/achievements/achievement-showcase'
-import { getDashboardData } from '@/app/actions/dashboard'
-import { getCurrentUserId } from '@/lib/auth-cookies'
-import { redirect } from 'next/navigation'
+import { AuthWrapper } from "@/components/auth/auth-wrapper";
+import { MainLayout } from "@/components/layout/main-layout";
+import { StatsOverview } from "@/components/dashboard/stats-overview";
+import { RecentActions } from "@/components/dashboard/recent-actions";
+import { StreakCounter } from "@/components/dashboard/streak-counter";
+import { QuickActions } from "@/components/dashboard/quick-actions";
+import { AchievementShowcase } from "@/components/achievements/achievement-showcase";
+import { getDashboardData } from "@/app/actions/dashboard";
+import { getCurrentUserId } from "@/lib/admin";
+import { redirect } from "next/navigation";
 
 /**
  * Personal Dashboard Page
@@ -20,27 +20,30 @@ import { redirect } from 'next/navigation'
  * - Achievement showcase
  */
 export default async function DashboardPage() {
-  const userId = await getCurrentUserId()
+  const userId = await getCurrentUserId();
 
   if (!userId) {
-    redirect('/')
+    redirect("/");
   }
 
-  const result = await getDashboardData(userId)
+  const result = await getDashboardData(userId);
 
   if (!result.success) {
     return (
       <AuthWrapper>
         <MainLayout maxWidth="xl">
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Failed to load dashboard data.</p>
+            <p className="text-muted-foreground">
+              Failed to load dashboard data.
+            </p>
           </div>
         </MainLayout>
       </AuthWrapper>
-    )
+    );
   }
 
-  const { user, stats, recentActions, recentAchievements, categoryBreakdown } = result.data
+  const { user, stats, recentActions, recentAchievements, categoryBreakdown } =
+    result.data;
 
   return (
     <AuthWrapper>
@@ -90,5 +93,5 @@ export default async function DashboardPage() {
         </div>
       </MainLayout>
     </AuthWrapper>
-  )
+  );
 }

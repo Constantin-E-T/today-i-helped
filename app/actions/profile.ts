@@ -118,7 +118,9 @@ export async function getUserProfile(username: string): Promise<GetUserProfileRe
       },
     }
   } catch (error: unknown) {
-    logger.error({ error, username }, 'Error in getUserProfile function')
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : undefined
+    logger.error({ error: errorMessage, stack: errorStack, username }, 'Error in getUserProfile function')
     return {
       success: false,
       error: 'Failed to fetch user profile. Please try again later.',

@@ -1,29 +1,32 @@
-import * as React from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Clock, MapPin, History } from 'lucide-react'
-import { formatDistanceToNow } from '@/lib/date-utils'
-import { Category } from '@prisma/client'
-import type { Action } from '@prisma/client'
+import * as React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Clock, MapPin, History } from "lucide-react";
+import { formatRelativeTime } from "@/lib/date-utils";
+import { Category } from "@prisma/client";
+import type { Action } from "@prisma/client";
 
 interface ActionTimelineProps {
   actions: Array<
     Action & {
       challenge: {
-        text: string
-        category: Category
-      } | null
+        text: string;
+        category: Category;
+      } | null;
     }
-  >
-  username: string
+  >;
+  username: string;
 }
 
 const categoryStyles = {
-  PEOPLE: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20',
-  ANIMALS: 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20',
-  ENVIRONMENT: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
-  COMMUNITY: 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20',
-}
+  PEOPLE: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
+  ANIMALS:
+    "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
+  ENVIRONMENT:
+    "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
+  COMMUNITY:
+    "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20",
+};
 
 /**
  * ActionTimeline Component
@@ -49,7 +52,7 @@ export function ActionTimeline({ actions, username }: ActionTimelineProps) {
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -94,7 +97,7 @@ export function ActionTimeline({ actions, username }: ActionTimelineProps) {
                   <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      {formatDistanceToNow(action.completedAt)}
+                      {formatRelativeTime(action.completedAt)}
                     </div>
                     {action.location && (
                       <div className="flex items-center gap-1">
@@ -116,5 +119,5 @@ export function ActionTimeline({ actions, username }: ActionTimelineProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -1,11 +1,11 @@
-import { AuthWrapper } from '@/components/auth/auth-wrapper'
-import { MainLayout } from '@/components/layout/main-layout'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { AchievementGrid } from '@/components/achievements/achievement-grid'
-import { getAchievementProgress } from '@/app/actions/achievements'
-import { getCurrentUserId } from '@/lib/auth-cookies'
-import { redirect } from 'next/navigation'
-import { Trophy, Sparkles, Flame, Award, Users } from 'lucide-react'
+import { AuthWrapper } from "@/components/auth/auth-wrapper";
+import { MainLayout } from "@/components/layout/main-layout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AchievementGrid } from "@/components/achievements/achievement-grid";
+import { getAchievementProgress } from "@/app/actions/achievements";
+import { getCurrentUserId } from "@/lib/admin";
+import { redirect } from "next/navigation";
+import { Trophy, Sparkles, Flame, Award, Users } from "lucide-react";
 
 /**
  * Achievements Page
@@ -20,31 +20,33 @@ import { Trophy, Sparkles, Flame, Award, Users } from 'lucide-react'
  * Each achievement shows earned status and progress
  */
 export default async function AchievementsPage() {
-  const userId = await getCurrentUserId()
+  const userId = await getCurrentUserId();
 
   if (!userId) {
-    redirect('/')
+    redirect("/");
   }
 
-  const result = await getAchievementProgress(userId)
+  const result = await getAchievementProgress(userId);
 
   if (!result.success) {
     return (
       <AuthWrapper>
         <MainLayout maxWidth="xl">
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Failed to load achievements.</p>
+            <p className="text-muted-foreground">
+              Failed to load achievements.
+            </p>
           </div>
         </MainLayout>
       </AuthWrapper>
-    )
+    );
   }
 
-  const achievements = result.data
+  const achievements = result.data;
 
   // Count earned achievements
-  const earnedCount = achievements.filter((a) => a.isEarned).length
-  const totalCount = achievements.length
+  const earnedCount = achievements.filter((a) => a.isEarned).length;
+  const totalCount = achievements.length;
 
   return (
     <AuthWrapper>
@@ -133,5 +135,5 @@ export default async function AchievementsPage() {
         </div>
       </MainLayout>
     </AuthWrapper>
-  )
+  );
 }

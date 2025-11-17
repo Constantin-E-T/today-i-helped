@@ -315,7 +315,9 @@ export async function getAchievementProgress(userId: string) {
 
     return { success: true, data: achievementsWithProgress }
   } catch (error: unknown) {
-    logger.error({ error, userId }, 'Error in getAchievementProgress function')
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : undefined
+    logger.error({ error: errorMessage, stack: errorStack, userId }, 'Error in getAchievementProgress function')
     return {
       success: false,
       error: 'Failed to get achievement progress. Please try again later.',
