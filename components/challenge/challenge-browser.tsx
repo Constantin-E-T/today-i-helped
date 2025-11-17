@@ -1,19 +1,19 @@
-'use client'
+"use client";
 
-import * as React from 'react'
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardFooter } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { getFilteredChallenges } from '@/app/actions/challenge'
-import { SubmitAction } from '@/components/action/submit-action'
-import { Category, Difficulty, type Challenge } from '@prisma/client'
-import { CATEGORIES, getCategoryConfig } from '@/lib/constants'
-import { Loader2, RefreshCw } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import * as React from "react";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { getFilteredChallenges } from "@/app/actions/challenge";
+import { SubmitAction } from "@/components/action/submit-action";
+import { Category, Difficulty, type Challenge } from "@prisma/client";
+import { CATEGORIES, getCategoryConfig } from "@/lib/constants";
+import { Loader2, RefreshCw } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-type FilterCategory = Category | 'ALL'
-type FilterDifficulty = Difficulty | 'ALL'
+type FilterCategory = Category | "ALL";
+type FilterDifficulty = Difficulty | "ALL";
 
 /**
  * Challenge Browser Component
@@ -29,64 +29,64 @@ type FilterDifficulty = Difficulty | 'ALL'
  * - Loading states and error handling
  */
 export function ChallengeBrowser() {
-  const [challenges, setChallenges] = useState<Challenge[]>([])
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Filters
-  const [categoryFilter, setCategoryFilter] = useState<FilterCategory>('ALL')
+  const [categoryFilter, setCategoryFilter] = useState<FilterCategory>("ALL");
   const [difficultyFilter, setDifficultyFilter] =
-    useState<FilterDifficulty>('ALL')
+    useState<FilterDifficulty>("ALL");
 
   // Fetch challenges based on current filters
   const fetchChallenges = async (isRefresh = false) => {
     if (isRefresh) {
-      setRefreshing(true)
+      setRefreshing(true);
     } else {
-      setLoading(true)
+      setLoading(true);
     }
-    setError(null)
+    setError(null);
 
     try {
       const result = await getFilteredChallenges({
-        category: categoryFilter === 'ALL' ? undefined : categoryFilter,
-        difficulty: difficultyFilter === 'ALL' ? undefined : difficultyFilter,
+        category: categoryFilter === "ALL" ? undefined : categoryFilter,
+        difficulty: difficultyFilter === "ALL" ? undefined : difficultyFilter,
         limit: 4,
         random: true,
-      })
+      });
 
       if (result.success) {
-        setChallenges(result.data)
+        setChallenges(result.data);
       } else {
-        setError(result.error)
+        setError(result.error);
       }
     } catch (err) {
-      setError('Failed to load challenges. Please try again.')
-      console.error('Error fetching challenges:', err)
+      setError("Failed to load challenges. Please try again.");
+      console.error("Error fetching challenges:", err);
     } finally {
-      setLoading(false)
-      setRefreshing(false)
+      setLoading(false);
+      setRefreshing(false);
     }
-  }
+  };
 
   // Fetch challenges on mount and when filters change
   useEffect(() => {
-    fetchChallenges()
+    fetchChallenges();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryFilter, difficultyFilter])
+  }, [categoryFilter, difficultyFilter]);
 
   const handleRefresh = () => {
-    fetchChallenges(true)
-  }
+    fetchChallenges(true);
+  };
 
   const handleCategoryFilter = (category: FilterCategory) => {
-    setCategoryFilter(category)
-  }
+    setCategoryFilter(category);
+  };
 
   const handleDifficultyFilter = (difficulty: FilterDifficulty) => {
-    setDifficultyFilter(difficulty)
-  }
+    setDifficultyFilter(difficulty);
+  };
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6">
@@ -104,16 +104,18 @@ export function ChallengeBrowser() {
       <div className="space-y-3">
         <h3 className="text-sm font-medium text-muted-foreground">Category</h3>
         <div className="flex flex-wrap gap-2">
-          {CATEGORIES.filter((cat) => cat.id !== 'OTHER').map((category) => (
+          {CATEGORIES.filter((cat) => cat.id !== "OTHER").map((category) => (
             <Button
               key={category.id}
-              variant={categoryFilter === category.id ? 'default' : 'outline'}
+              variant={categoryFilter === category.id ? "default" : "outline"}
               size="sm"
-              onClick={() => handleCategoryFilter(category.id as FilterCategory)}
+              onClick={() =>
+                handleCategoryFilter(category.id as FilterCategory)
+              }
               className={cn(
-                'min-h-[40px] px-4 transition-all',
+                "min-h-[40px] px-4 transition-all",
                 categoryFilter === category.id && category.bgColor,
-                categoryFilter === category.id && 'text-white',
+                categoryFilter === category.id && "text-white",
                 categoryFilter === category.id && category.hoverColor
               )}
             >
@@ -123,9 +125,9 @@ export function ChallengeBrowser() {
             </Button>
           ))}
           <Button
-            variant={categoryFilter === 'ALL' ? 'default' : 'outline'}
+            variant={categoryFilter === "ALL" ? "default" : "outline"}
             size="sm"
-            onClick={() => handleCategoryFilter('ALL')}
+            onClick={() => handleCategoryFilter("ALL")}
             className="min-h-[40px] px-4"
           >
             ALL
@@ -134,60 +136,66 @@ export function ChallengeBrowser() {
       </div>
 
       {/* Difficulty Filter */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium text-muted-foreground">
-            Difficulty
-          </h3>
-          <div className="flex gap-2">
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div className="flex-1">
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">
+              Difficulty
+            </h3>
+            <div className="flex gap-2">
+              <Button
+                variant={difficultyFilter === "EASY" ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleDifficultyFilter("EASY")}
+                className="min-h-[40px]"
+              >
+                Easy (2 min)
+              </Button>
+              <Button
+                variant={difficultyFilter === "MEDIUM" ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleDifficultyFilter("MEDIUM")}
+                className="min-h-[40px]"
+              >
+                Medium (5 min)
+              </Button>
+              <Button
+                variant={difficultyFilter === "ALL" ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleDifficultyFilter("ALL")}
+                className="min-h-[40px]"
+              >
+                All levels
+              </Button>
+            </div>
+          </div>
+
+          {/* Refresh Button */}
+          <div className="flex items-end">
             <Button
-              variant={difficultyFilter === 'EASY' ? 'default' : 'outline'}
+              variant="outline"
               size="sm"
-              onClick={() => handleDifficultyFilter('EASY')}
-              className="min-h-[40px]"
+              onClick={handleRefresh}
+              disabled={refreshing || loading}
+              className="min-h-[40px] px-4"
             >
-              Easy (2 min)
-            </Button>
-            <Button
-              variant={difficultyFilter === 'MEDIUM' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => handleDifficultyFilter('MEDIUM')}
-              className="min-h-[40px]"
-            >
-              Medium (5 min)
-            </Button>
-            <Button
-              variant={difficultyFilter === 'ALL' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => handleDifficultyFilter('ALL')}
-              className="min-h-[40px]"
-            >
-              All levels
+              {refreshing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">
+                    Show me different challenges
+                  </span>
+                  <span className="sm:hidden">Shuffle</span>
+                </>
+              )}
             </Button>
           </div>
         </div>
-
-        {/* Refresh Button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={refreshing || loading}
-          className="min-h-[40px] px-4"
-        >
-          {refreshing ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Loading...
-            </>
-          ) : (
-            <>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Show me different challenges</span>
-              <span className="sm:hidden">Shuffle</span>
-            </>
-          )}
-        </Button>
       </div>
 
       {/* Loading State */}
@@ -243,18 +251,18 @@ export function ChallengeBrowser() {
         </div>
       )}
     </div>
-  )
+  );
 }
 
 /**
  * Individual Challenge Card Component
  */
 interface ChallengeCardProps {
-  challenge: Challenge
+  challenge: Challenge;
 }
 
 function ChallengeCard({ challenge }: ChallengeCardProps) {
-  const categoryConfig = getCategoryConfig(challenge.category)
+  const categoryConfig = getCategoryConfig(challenge.category);
 
   return (
     <Card className="shadow-md hover:shadow-lg transition-all duration-300 flex flex-col">
@@ -264,9 +272,9 @@ function ChallengeCard({ challenge }: ChallengeCardProps) {
           <Badge
             className={cn(
               categoryConfig.bgColor,
-              'text-white',
+              "text-white",
               categoryConfig.hoverColor,
-              'transition-colors'
+              "transition-colors"
             )}
           >
             <span className="mr-1">{categoryConfig.icon}</span>
@@ -277,10 +285,10 @@ function ChallengeCard({ challenge }: ChallengeCardProps) {
           <Badge
             variant="outline"
             className={cn(
-              challenge.difficulty === 'EASY'
-                ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800'
-                : 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800',
-              'text-xs'
+              challenge.difficulty === "EASY"
+                ? "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800"
+                : "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
+              "text-xs"
             )}
           >
             {challenge.difficulty}
@@ -300,5 +308,5 @@ function ChallengeCard({ challenge }: ChallengeCardProps) {
         <SubmitAction challenge={challenge} />
       </CardFooter>
     </Card>
-  )
+  );
 }

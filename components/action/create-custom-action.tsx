@@ -404,7 +404,7 @@ function FormContent({
             variant="outline"
             onClick={handleBackToForm}
             disabled={isSubmitting}
-            className="flex-1"
+            className="flex-1 min-h-[44px]"
           >
             Edit
           </Button>
@@ -530,7 +530,7 @@ function FormContent({
           variant="outline"
           onClick={() => handleOpenChange(false)}
           disabled={isSubmitting}
-          className="flex-1"
+          className="flex-1 min-h-[44px]"
         >
           Cancel
         </Button>
