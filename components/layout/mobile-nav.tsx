@@ -35,7 +35,7 @@ const navigationItems: NavItem[] = [
     title: "Home",
     href: "/",
     icon: Home,
-    description: "View your daily challenge",
+    description: "Discover challenges to complete",
   },
   {
     title: "Feed",
