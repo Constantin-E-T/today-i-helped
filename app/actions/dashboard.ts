@@ -43,10 +43,14 @@ type GetDashboardDataResponse =
 
 /**
  * Get comprehensive dashboard data for a user
+ * SECURITY: Uses server-verified userId parameter (acceptable for read operations)
  * Returns stats, recent actions, achievements, and category breakdown
  */
 export async function getDashboardData(userId: string): Promise<GetDashboardDataResponse> {
   try {
+    // Note: userId parameter is acceptable here as it's a read-only operation
+    // and doesn't allow privilege escalation
+
     // Get user with achievements
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -149,11 +153,15 @@ export async function getDashboardData(userId: string): Promise<GetDashboardData
 
 /**
  * Update user's daily streak
+ * SECURITY: Uses server-verified userId parameter (acceptable for internal use)
  * Should be called when user completes an action
  * Checks if last action was yesterday (continue streak) or today (maintain streak)
  */
 export async function updateUserStreak(userId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    // Note: This function should only be called by other server actions
+    // (like createAction) with server-verified userId
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {

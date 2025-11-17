@@ -2,6 +2,8 @@
 
 import prisma from '@/lib/prisma'
 import logger from '@/lib/logger'
+import { getCurrentUserId } from '@/lib/admin'
+import { checkRateLimitPreset } from '@/lib/rate-limit'
 import type { Clap } from '@prisma/client'
 
 // Type definitions for server action responses
@@ -19,6 +21,7 @@ type HasUserClappedResponse =
 
 /**
  * Add a clap to an action
+ * SECURITY: Verifies user from server-side cookies and applies rate limiting
  * Uses transaction to ensure atomicity:
  * - Create clap record (handle duplicate with unique constraint catch)
  * - Increment action.clapsCount
@@ -26,16 +29,39 @@ type HasUserClappedResponse =
  */
 export async function addClap(
   actionId: string,
-  userId: string
+  userIdParam?: string // Parameter kept for backward compatibility but NOT USED
 ): Promise<AddClapResponse> {
   try {
+    // SECURITY: Get userId from server-side cookies (never trust client parameter)
+    const userId = await getCurrentUserId()
+    if (!userId) {
+      logger.warn({ actionId }, 'Unauthenticated clap attempt')
+      return {
+        success: false,
+        error: 'Authentication required. Please log in to clap.',
+      }
+    }
+
+    // SECURITY: Rate limiting - max 100 claps per hour
+    const rateLimit = await checkRateLimitPreset(userId, 'CLAP')
+    if (!rateLimit.allowed) {
+      logger.warn(
+        { userId, actionId, retryAfter: rateLimit.retryAfter },
+        'Rate limit exceeded for claps'
+      )
+      return {
+        success: false,
+        error: `Too many claps. Try again in ${rateLimit.retryAfter} seconds.`,
+      }
+    }
+
     // Use transaction for atomicity
     const clap = await prisma.$transaction(async (tx) => {
-      // Create clap record
+      // Create clap record with server-verified userId
       const newClap = await tx.clap.create({
         data: {
           actionId,
-          userId,
+          userId, // Server-verified userId from cookies
         },
       })
 
@@ -92,6 +118,7 @@ export async function addClap(
 
 /**
  * Remove a clap from an action
+ * SECURITY: Verifies user from server-side cookies
  * Uses transaction to ensure atomicity:
  * - Delete clap record
  * - Decrement action.clapsCount
@@ -99,16 +126,26 @@ export async function addClap(
  */
 export async function removeClap(
   actionId: string,
-  userId: string
+  userIdParam?: string // Parameter kept for backward compatibility but NOT USED
 ): Promise<RemoveClapResponse> {
   try {
+    // SECURITY: Get userId from server-side cookies (never trust client parameter)
+    const userId = await getCurrentUserId()
+    if (!userId) {
+      logger.warn({ actionId }, 'Unauthenticated unclap attempt')
+      return {
+        success: false,
+        error: 'Authentication required.',
+      }
+    }
+
     await prisma.$transaction(async (tx) => {
       // Find the clap first to ensure it exists
       const clap = await tx.clap.findUnique({
         where: {
           actionId_userId: {
             actionId,
-            userId,
+            userId, // Server-verified userId from cookies
           },
         },
       })
@@ -178,11 +215,12 @@ export async function removeClap(
 
 /**
  * Check if a user has clapped an action
+ * SECURITY: Can accept userId parameter for checking other users' claps (read-only operation)
  * Returns boolean indicating if the clap exists
  */
 export async function hasUserClapped(
   actionId: string,
-  userId: string
+  userId: string // Acceptable here since it's read-only and doesn't modify data
 ): Promise<HasUserClappedResponse> {
   try {
     // Find clap by actionId + userId

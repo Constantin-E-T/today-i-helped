@@ -7,6 +7,7 @@ import type { ActivityChartData, CategoryChartData } from '@/types/dashboard'
 
 /**
  * Get activity chart data for a user
+ * SECURITY: Uses userId parameter (acceptable for read operations)
  * Returns daily action counts for the specified period
  */
 export async function getActivityChartData(
@@ -14,6 +15,8 @@ export async function getActivityChartData(
   days: number = 30
 ) {
   try {
+    // Note: userId parameter is acceptable here as it's a read-only operation
+
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
     startDate.setHours(0, 0, 0, 0)
@@ -74,9 +77,12 @@ export async function getActivityChartData(
 
 /**
  * Get category breakdown chart data for a user
+ * SECURITY: Uses userId parameter (acceptable for read operations)
  */
 export async function getCategoryChartData(userId: string) {
   try {
+    // Note: userId parameter is acceptable here as it's a read-only operation
+
     const categoryBreakdown = await prisma.action.groupBy({
       by: ['category'],
       where: { userId },

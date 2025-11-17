@@ -3,8 +3,10 @@
 import prisma from '@/lib/prisma'
 import logger from '@/lib/logger'
 import { generateRecoveryCode, normalizeRecoveryCode } from '@/lib/recovery-code'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { z } from 'zod'
 import type { User } from '@prisma/client'
+import { headers } from 'next/headers'
 
 // Type definitions for server action responses
 type CreateUserResponse =
@@ -63,10 +65,35 @@ function isPrismaError(error: unknown): error is { code: string; meta?: { target
 
 /**
  * Create a new user with auto-generated username and recovery code
+ * SECURITY: Rate limited by IP address to prevent abuse
  * Retries if username or recovery code collision occurs
  */
 export async function createUser(): Promise<CreateUserResponse> {
   try {
+    // SECURITY: Rate limiting by IP address - max 5 user creations per hour per IP
+    const headersList = await headers()
+    const ipAddress = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+                      headersList.get('x-real-ip') ||
+                      'unknown'
+
+    const rateLimit = await checkRateLimit(
+      ipAddress,
+      'CREATE_USER',
+      RATE_LIMITS.CREATE_USER.limit,
+      RATE_LIMITS.CREATE_USER.windowMs
+    )
+
+    if (!rateLimit.allowed) {
+      logger.warn(
+        { ipAddress, retryAfter: rateLimit.retryAfter },
+        'Rate limit exceeded for user creation'
+      )
+      return {
+        success: false,
+        error: `Too many account creation attempts. Try again in ${rateLimit.retryAfter} seconds.`,
+      }
+    }
+
     const maxRetries = 10
     let attempts = 0
 
@@ -176,13 +203,38 @@ export async function updateUserLastSeen(userId: string): Promise<UpdateUserResp
 
 /**
  * Get user by recovery code with input validation
- * Implements security best practices:
+ * SECURITY: Implements multiple security best practices:
  * - Input validation with Zod
  * - Type casting to prevent operator injection
  * - Generic error messages to prevent enumeration attacks
+ * - Rate limiting by IP to prevent brute force attacks
  */
 export async function getUserByRecoveryCode(code: string): Promise<GetUserResponse> {
   try {
+    // SECURITY: Rate limiting by IP address - max 5 attempts per 15 minutes
+    const headersList = await headers()
+    const ipAddress = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+                      headersList.get('x-real-ip') ||
+                      'unknown'
+
+    const rateLimit = await checkRateLimit(
+      ipAddress,
+      'RECOVERY_CODE',
+      RATE_LIMITS.RECOVERY_CODE.limit,
+      RATE_LIMITS.RECOVERY_CODE.windowMs
+    )
+
+    if (!rateLimit.allowed) {
+      logger.warn(
+        { ipAddress, retryAfter: rateLimit.retryAfter },
+        'Rate limit exceeded for recovery code attempts'
+      )
+      return {
+        success: false,
+        error: 'Too many attempts. Please try again later.',
+      }
+    }
+
     // Validate and normalize the recovery code
     const validationResult = RecoveryCodeSchema.safeParse(code)
 
@@ -233,10 +285,30 @@ export async function getUserByRecoveryCode(code: string): Promise<GetUserRespon
 
 /**
  * Regenerate recovery code for a user
+ * SECURITY: Rate limited to prevent abuse
  * Retries if recovery code collision occurs
  */
 export async function regenerateRecoveryCode(userId: string): Promise<CreateUserResponse> {
   try {
+    // SECURITY: Rate limiting - max 5 regenerations per hour
+    const rateLimit = await checkRateLimit(
+      userId,
+      'REGENERATE_RECOVERY_CODE',
+      5,
+      60 * 60 * 1000 // 1 hour
+    )
+
+    if (!rateLimit.allowed) {
+      logger.warn(
+        { userId, retryAfter: rateLimit.retryAfter },
+        'Rate limit exceeded for recovery code regeneration'
+      )
+      return {
+        success: false,
+        error: `Too many regeneration attempts. Try again in ${rateLimit.retryAfter} seconds.`,
+      }
+    }
+
     // Validate user ID
     const validationResult = UserIdSchema.safeParse(userId)
 
