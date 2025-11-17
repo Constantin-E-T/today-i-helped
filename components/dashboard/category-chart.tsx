@@ -101,12 +101,12 @@ export function CategoryChart({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
+    <Card className="border-2">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg">{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pb-6">
         {variant === 'bar' ? (
           <ResponsiveContainer width="100%" height={height}>
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -133,29 +133,38 @@ export function CategoryChart({
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <ResponsiveContainer width="100%" height={height}>
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ category, percent }) =>
-                  `${category}: ${(percent * 100).toFixed(0)}%`
-                }
-                outerRadius={80}
-                fill="hsl(var(--primary))"
-                dataKey="count"
-                animationDuration={1000}
-              >
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="flex items-center justify-center">
+            <ResponsiveContainer width="100%" height={height}>
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ category, percent }) =>
+                    percent > 0.05 ? `${category} ${(percent * 100).toFixed(0)}%` : ''
+                  }
+                  outerRadius="80%"
+                  innerRadius="50%"
+                  fill="hsl(var(--primary))"
+                  dataKey="count"
+                  animationDuration={1000}
+                  paddingAngle={2}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+                <Legend
+                  verticalAlign="bottom"
+                  height={36}
+                  iconType="circle"
+                  wrapperStyle={{ fontSize: '12px' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         )}
       </CardContent>
     </Card>

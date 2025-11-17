@@ -1,55 +1,69 @@
-'use client'
+"use client";
 
-import * as React from 'react'
-import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Sparkles, Plus, Zap } from 'lucide-react'
+import * as React from "react";
+import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Sparkles, Plus, Zap } from "lucide-react";
 
 /**
  * QuickActions Component
- * Provides quick access buttons for common actions
- * Shortcuts to complete today's challenge and create custom actions
+ *
+ * Modern quick action cards with:
+ * - Prominent call-to-action buttons
+ * - Gradient backgrounds
+ * - Clear descriptions
+ * - Icon-driven design
  */
 export function QuickActions() {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Zap className="h-5 w-5" />
+    <Card className="border-2">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2 text-xl">
+          <Zap className="h-5 w-5 text-primary" />
           Quick Actions
         </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Jump into action and make a difference today
+        </p>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <Link href="/action-flow" className="block">
-          <Button
-            size="lg"
-            className="w-full justify-start gap-3 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-          >
-            <Sparkles className="h-5 w-5" />
-            <div className="flex flex-col items-start">
-              <span className="font-semibold">Complete Today's Challenge</span>
-              <span className="text-xs opacity-90">Discover and complete a new action</span>
+      <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Link href="/action-flow" className="group">
+          <div className="relative overflow-hidden rounded-lg border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-6 transition-all hover:border-primary/40 hover:shadow-lg hover:scale-[1.02]">
+            <div className="flex flex-col gap-3">
+              <div className="p-3 rounded-xl bg-primary/10 w-fit">
+                <Sparkles className="h-6 w-6 text-primary" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-semibold text-lg text-foreground">
+                  Today's Challenge
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Discover and complete a new act of kindness
+                </p>
+              </div>
             </div>
-          </Button>
+          </div>
         </Link>
 
-        <Link href="/action-flow?mode=custom" className="block">
-          <Button
-            size="lg"
-            variant="outline"
-            className="w-full justify-start gap-3 hover:bg-accent"
-          >
-            <Plus className="h-5 w-5" />
-            <div className="flex flex-col items-start">
-              <span className="font-semibold">Create Custom Action</span>
-              <span className="text-xs text-muted-foreground">
-                Share your own act of kindness
-              </span>
+        <Link href="/action-flow?mode=custom" className="group">
+          <div className="relative overflow-hidden rounded-lg border-2 border-border bg-card p-6 transition-all hover:border-primary/40 hover:shadow-lg hover:scale-[1.02]">
+            <div className="flex flex-col gap-3">
+              <div className="p-3 rounded-xl bg-muted w-fit">
+                <Plus className="h-6 w-6 text-foreground" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-semibold text-lg text-foreground">
+                  Custom Action
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Share your own unique act of kindness
+                </p>
+              </div>
             </div>
-          </Button>
+          </div>
         </Link>
       </CardContent>
     </Card>
-  )
+  );
 }

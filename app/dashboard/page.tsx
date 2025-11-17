@@ -9,23 +9,38 @@ import { QuickActions } from "@/components/dashboard/quick-actions";
 import { AchievementProgressList } from "@/components/achievements/achievement-progress";
 import { CommunityBanner } from "@/components/social/community-banner";
 import { getDashboardData } from "@/app/actions/dashboard";
-import { getActivityChartData, getCategoryChartData } from "@/app/actions/charts";
+import {
+  getActivityChartData,
+  getCategoryChartData,
+} from "@/app/actions/charts";
 import { getCommunityStats } from "@/app/actions/social";
 import { getAchievementProgress } from "@/app/actions/achievements";
 import { getCurrentUserId } from "@/lib/admin";
 import { redirect } from "next/navigation";
-import { Heart, Flame, Award, TrendingUp, Users } from "lucide-react";
+import {
+  Heart,
+  Flame,
+  Award,
+  TrendingUp,
+  ArrowLeft,
+  Calendar,
+  Target,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import type { StatCardData } from "@/types/dashboard";
 
 /**
- * Modern Dashboard Page
+ * Dashboard Page
  *
- * Redesigned with professional SaaS layout featuring:
- * - Modern stat cards with trends
- * - Data visualization charts (activity & category breakdown)
- * - Achievement progress indicators
+ * Modern personal dashboard featuring:
+ * - Back navigation button
+ * - Professional stat cards with icons
+ * - Interactive data visualization
+ * - Achievement progress tracking
  * - Community highlights
- * - Responsive grid layout
+ * - Quick action shortcuts
+ * - Responsive grid layout optimized for all devices
  */
 export default async function DashboardPage() {
   const userId = await getCurrentUserId();
@@ -35,7 +50,13 @@ export default async function DashboardPage() {
   }
 
   // Fetch all dashboard data in parallel
-  const [dashboardResult, activityChartResult, categoryChartResult, communityResult, achievementProgressResult] = await Promise.all([
+  const [
+    dashboardResult,
+    activityChartResult,
+    categoryChartResult,
+    communityResult,
+    achievementProgressResult,
+  ] = await Promise.all([
     getDashboardData(userId),
     getActivityChartData(userId, 30),
     getCategoryChartData(userId),
@@ -57,7 +78,8 @@ export default async function DashboardPage() {
     );
   }
 
-  const { user, stats, recentActions, categoryBreakdown } = dashboardResult.data;
+  const { user, stats, recentActions, categoryBreakdown } =
+    dashboardResult.data;
 
   // Prepare stat cards with modern layout
   const statCards: StatCardData[] = [
@@ -73,7 +95,8 @@ export default async function DashboardPage() {
       value: `${stats.currentStreak} days`,
       icon: Flame,
       color: "warning",
-      description: stats.currentStreak > 0 ? "Keep it going!" : "Start your streak today",
+      description:
+        stats.currentStreak > 0 ? "Keep it going!" : "Start your streak today",
     },
     {
       label: "Categories Helped",
@@ -93,64 +116,76 @@ export default async function DashboardPage() {
 
   // Get in-progress achievements (not earned yet, with progress > 0)
   const inProgressAchievements = achievementProgressResult.success
-    ? achievementProgressResult.data.filter((a) => !a.isEarned && a.currentProgress > 0)
+    ? achievementProgressResult.data.filter(
+        (a) => !a.isEarned && a.currentProgress > 0
+      )
     : [];
 
   return (
     <AuthWrapper>
-      <MainLayout maxWidth="xl">
-        <div className="space-y-8">
-          {/* Page Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                Welcome back, {user.username}!
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                Here's your kindness journey at a glance
-              </p>
-            </div>
+      <MainLayout maxWidth="7xl">
+        <div className="space-y-6">
+          {/* Back Navigation */}
+          <div>
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Home
+              </Button>
+            </Link>
           </div>
 
-          {/* Stats Cards Grid */}
+          {/* Page Header */}
+          <div className="space-y-1">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground">
+              Dashboard
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Welcome back,{" "}
+              <span className="font-semibold text-foreground">
+                {user.username}
+              </span>
+              ! Here's your impact at a glance.
+            </p>
+          </div>
+
+          {/* Stats Overview */}
           <StatsGrid stats={statCards} columns={4} />
 
-          {/* Community Highlights */}
-          {communityResult.success && communityResult.data && (
-            <CommunityBanner stats={communityResult.data} />
-          )}
-
-          {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Charts & Activity */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Activity Chart */}
-              {activityChartResult.success && (
-                <ActivityChart
-                  data={activityChartResult.data}
-                  title="Your Activity"
-                  description="Actions completed in the last 30 days"
-                />
-              )}
-
-              {/* Category Breakdown Chart */}
-              {categoryChartResult.success && (
-                <CategoryChart
-                  data={categoryChartResult.data}
-                  title="Category Breakdown"
-                  description="How you're helping across categories"
-                  variant="bar"
-                />
-              )}
-
+          {/* Two Column Layout */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            {/* Main Content - Left Side */}
+            <div className="xl:col-span-2 space-y-6">
               {/* Quick Actions */}
               <QuickActions />
+
+              {/* Charts Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Activity Pie Chart */}
+                {activityChartResult.success && (
+                  <ActivityChart
+                    data={activityChartResult.data}
+                    title="Activity Overview"
+                    description="Your recent contributions"
+                  />
+                )}
+
+                {/* Category Pie Chart */}
+                {categoryChartResult.success && (
+                  <CategoryChart
+                    data={categoryChartResult.data}
+                    title="Impact by Category"
+                    description="Where you're helping most"
+                    variant="pie"
+                  />
+                )}
+              </div>
 
               {/* Recent Actions */}
               <RecentActions actions={recentActions} />
             </div>
 
-            {/* Right Column - Streak & Achievements */}
+            {/* Sidebar - Right Side */}
             <div className="space-y-6">
               {/* Streak Counter */}
               <StreakCounter
@@ -158,18 +193,48 @@ export default async function DashboardPage() {
                 longestStreak={stats.longestStreak}
               />
 
+              {/* Community Stats */}
+              {communityResult.success && communityResult.data && (
+                <CommunityBanner stats={communityResult.data} />
+              )}
+
               {/* Achievement Progress */}
               {inProgressAchievements.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                    <Award className="h-5 w-5 text-primary" />
-                    Next Achievements
-                  </h3>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-primary" />
+                    <h3 className="text-lg font-semibold text-foreground">
+                      Progress Tracker
+                    </h3>
+                  </div>
                   <AchievementProgressList
                     achievements={inProgressAchievements}
                     variant="compact"
                     maxDisplay={5}
                   />
+                  <Link href="/achievements">
+                    <Button variant="outline" className="w-full" size="sm">
+                      View All Achievements
+                    </Button>
+                  </Link>
+                </div>
+              )}
+
+              {/* No achievements in progress */}
+              {inProgressAchievements.length === 0 && (
+                <div className="rounded-lg border border-dashed p-6 text-center space-y-2">
+                  <Award className="h-8 w-8 mx-auto text-muted-foreground" />
+                  <p className="text-sm font-medium text-foreground">
+                    Start earning achievements!
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Complete actions to unlock rewards
+                  </p>
+                  <Link href="/achievements">
+                    <Button variant="link" size="sm" className="text-xs">
+                      Explore Achievements
+                    </Button>
+                  </Link>
                 </div>
               )}
             </div>

@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import { useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { useTheme } from 'next-themes'
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import {
   CommandDialog,
   CommandEmpty,
@@ -12,7 +12,8 @@ import {
   CommandList,
   CommandSeparator,
   CommandShortcut,
-} from '@/components/ui/command'
+} from "@/components/ui/command";
+import { Kbd } from "@/components/ui/kbd";
 import {
   Home,
   LayoutDashboard,
@@ -26,7 +27,7 @@ import {
   Heart,
   TrendingUp,
   User,
-} from 'lucide-react'
+} from "lucide-react";
 
 /**
  * Command Palette Component
@@ -42,27 +43,27 @@ import {
  * - Search functionality
  */
 export function CommandPalette() {
-  const [open, setOpen] = useState(false)
-  const router = useRouter()
-  const { setTheme } = useTheme()
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const { setTheme } = useTheme();
 
   // Handle keyboard shortcut (Cmd+K / Ctrl+K)
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        setOpen((open) => !open)
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setOpen((open) => !open);
       }
-    }
+    };
 
-    document.addEventListener('keydown', down)
-    return () => document.removeEventListener('keydown', down)
-  }, [])
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
 
   const runCommand = useCallback((command: () => void) => {
-    setOpen(false)
-    command()
-  }, [])
+    setOpen(false);
+    command();
+  }, []);
 
   return (
     <>
@@ -82,9 +83,10 @@ export function CommandPalette() {
       >
         <Search className="h-4 w-4" />
         <span>Search...</span>
-        <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-xs font-medium text-muted-foreground opacity-100">
-          <span className="text-xs">⌘</span>K
-        </kbd>
+        <span className="ml-auto inline-flex items-center gap-1">
+          <Kbd>⌘</Kbd>
+          <Kbd>K</Kbd>
+        </span>
       </button>
 
       {/* Command Dialog */}
@@ -95,46 +97,44 @@ export function CommandPalette() {
 
           {/* Navigation */}
           <CommandGroup heading="Navigation">
-            <CommandItem
-              onSelect={() => runCommand(() => router.push('/'))}
-            >
+            <CommandItem onSelect={() => runCommand(() => router.push("/"))}>
               <Home className="mr-2 h-4 w-4" />
               <span>Home</span>
             </CommandItem>
             <CommandItem
-              onSelect={() => runCommand(() => router.push('/dashboard'))}
+              onSelect={() => runCommand(() => router.push("/dashboard"))}
             >
               <LayoutDashboard className="mr-2 h-4 w-4" />
               <span>Dashboard</span>
-              <CommandShortcut>⌘D</CommandShortcut>
+              <Kbd>⌘D</Kbd>
             </CommandItem>
             <CommandItem
-              onSelect={() => runCommand(() => router.push('/feed'))}
+              onSelect={() => runCommand(() => router.push("/feed"))}
             >
               <Heart className="mr-2 h-4 w-4" />
               <span>Feed</span>
-              <CommandShortcut>⌘F</CommandShortcut>
+              <Kbd>⌘F</Kbd>
             </CommandItem>
             <CommandItem
-              onSelect={() => runCommand(() => router.push('/achievements'))}
+              onSelect={() => runCommand(() => router.push("/achievements"))}
             >
               <Award className="mr-2 h-4 w-4" />
               <span>Achievements</span>
-              <CommandShortcut>⌘A</CommandShortcut>
+              <Kbd>⌘A</Kbd>
             </CommandItem>
             <CommandItem
-              onSelect={() => runCommand(() => router.push('/leaderboard'))}
+              onSelect={() => runCommand(() => router.push("/leaderboard"))}
             >
               <TrendingUp className="mr-2 h-4 w-4" />
               <span>Leaderboard</span>
-              <CommandShortcut>⌘L</CommandShortcut>
+              <Kbd>⌘L</Kbd>
             </CommandItem>
             <CommandItem
-              onSelect={() => runCommand(() => router.push('/profile'))}
+              onSelect={() => runCommand(() => router.push("/profile"))}
             >
               <User className="mr-2 h-4 w-4" />
               <span>Profile</span>
-              <CommandShortcut>⌘P</CommandShortcut>
+              <Kbd>⌘P</Kbd>
             </CommandItem>
           </CommandGroup>
 
@@ -143,19 +143,19 @@ export function CommandPalette() {
           {/* Quick Actions */}
           <CommandGroup heading="Quick Actions">
             <CommandItem
-              onSelect={() => runCommand(() => router.push('/complete'))}
+              onSelect={() => runCommand(() => router.push("/complete"))}
             >
               <Heart className="mr-2 h-4 w-4" />
               <span>Complete Today's Challenge</span>
             </CommandItem>
             <CommandItem
-              onSelect={() => runCommand(() => router.push('/dashboard#stats'))}
+              onSelect={() => runCommand(() => router.push("/dashboard#stats"))}
             >
               <LayoutDashboard className="mr-2 h-4 w-4" />
               <span>View My Stats</span>
             </CommandItem>
             <CommandItem
-              onSelect={() => runCommand(() => router.push('/achievements'))}
+              onSelect={() => runCommand(() => router.push("/achievements"))}
             >
               <Award className="mr-2 h-4 w-4" />
               <span>View Achievements</span>
@@ -166,15 +166,15 @@ export function CommandPalette() {
 
           {/* Theme */}
           <CommandGroup heading="Theme">
-            <CommandItem onSelect={() => runCommand(() => setTheme('light'))}>
+            <CommandItem onSelect={() => runCommand(() => setTheme("light"))}>
               <Sun className="mr-2 h-4 w-4" />
               <span>Light</span>
             </CommandItem>
-            <CommandItem onSelect={() => runCommand(() => setTheme('dark'))}>
+            <CommandItem onSelect={() => runCommand(() => setTheme("dark"))}>
               <Moon className="mr-2 h-4 w-4" />
               <span>Dark</span>
             </CommandItem>
-            <CommandItem onSelect={() => runCommand(() => setTheme('system'))}>
+            <CommandItem onSelect={() => runCommand(() => setTheme("system"))}>
               <Monitor className="mr-2 h-4 w-4" />
               <span>System</span>
             </CommandItem>
@@ -185,7 +185,7 @@ export function CommandPalette() {
           {/* Settings */}
           <CommandGroup heading="Settings">
             <CommandItem
-              onSelect={() => runCommand(() => router.push('/settings'))}
+              onSelect={() => runCommand(() => router.push("/settings"))}
             >
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
@@ -194,5 +194,5 @@ export function CommandPalette() {
         </CommandList>
       </CommandDialog>
     </>
-  )
+  );
 }

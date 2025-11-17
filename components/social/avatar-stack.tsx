@@ -1,10 +1,10 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { cn } from '@/lib/utils'
-import { motion, AnimatePresence } from 'framer-motion'
-import type { AvatarStackProps, UserInfo } from '@/types/social'
+import { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import type { AvatarStackProps, UserInfo } from "@/types/social";
 
 /**
  * Avatar Stack Component
@@ -22,44 +22,44 @@ import type { AvatarStackProps, UserInfo } from '@/types/social'
 export function AvatarStack({
   users,
   max = 5,
-  size = 'md',
+  size = "md",
   onUserClick,
   showTooltip = true,
 }: AvatarStackProps) {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  const displayUsers = users.slice(0, max)
-  const remainingCount = users.length - max
+  const displayUsers = users.slice(0, max);
+  const remainingCount = users.length - max;
 
   const sizeClasses = {
-    sm: 'h-6 w-6 text-xs',
-    md: 'h-8 w-8 text-sm',
-    lg: 'h-10 w-10 text-base',
-  }
+    sm: "h-6 w-6 text-xs",
+    md: "h-8 w-8 text-sm",
+    lg: "h-10 w-10 text-base",
+  };
 
   const offsetClasses = {
-    sm: '-ml-2',
-    md: '-ml-3',
-    lg: '-ml-4',
-  }
+    sm: "-ml-2",
+    md: "-ml-3",
+    lg: "-ml-4",
+  };
 
   const getUserInitials = (username: string) => {
-    return username.slice(0, 2).toUpperCase()
-  }
+    return username.slice(0, 2).toUpperCase();
+  };
 
   const handleUserClick = (user: UserInfo) => {
     if (onUserClick) {
-      onUserClick(user.id)
+      onUserClick(user.id);
     }
-  }
+  };
 
   if (users.length === 0) {
-    return null
+    return null;
   }
 
   return (
     <div className="flex items-center">
-      <div className="flex items-center">
+      <div className="flex items-center -space-x-2">
         {displayUsers.map((user, index) => (
           <div
             key={user.id}
@@ -71,14 +71,16 @@ export function AvatarStack({
             <Avatar
               className={cn(
                 sizeClasses[size],
-                'border-2 border-background cursor-pointer transition-all hover:scale-110 hover:z-50',
-                index > 0 && offsetClasses[size],
-                onUserClick && 'hover:ring-2 hover:ring-primary'
+                "ring-2 ring-background cursor-pointer transition-all hover:scale-110 hover:z-50",
+                onUserClick && "hover:ring-primary"
               )}
               onClick={() => handleUserClick(user)}
             >
-              <AvatarImage src={user.avatarUrl || undefined} alt={user.username} />
-              <AvatarFallback className="bg-primary/10 text-primary font-medium">
+              <AvatarImage
+                src={user.avatarUrl || undefined}
+                alt={user.username}
+              />
+              <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white font-medium">
                 {getUserInitials(user.username)}
               </AvatarFallback>
             </Avatar>
@@ -97,18 +99,21 @@ export function AvatarStack({
                     <p className="font-medium text-sm text-foreground">
                       {user.username}
                     </p>
-                    {(user.totalActions !== undefined || user.currentStreak !== undefined) && (
+                    {(user.totalActions !== undefined ||
+                      user.currentStreak !== undefined) && (
                       <div className="mt-1 space-y-1">
                         {user.totalActions !== undefined && (
                           <p className="text-xs text-muted-foreground">
-                            {user.totalActions} {user.totalActions === 1 ? 'action' : 'actions'}
+                            {user.totalActions}{" "}
+                            {user.totalActions === 1 ? "action" : "actions"}
                           </p>
                         )}
-                        {user.currentStreak !== undefined && user.currentStreak > 0 && (
-                          <p className="text-xs text-muted-foreground">
-                            {user.currentStreak} day streak
-                          </p>
-                        )}
+                        {user.currentStreak !== undefined &&
+                          user.currentStreak > 0 && (
+                            <p className="text-xs text-muted-foreground">
+                              {user.currentStreak} day streak
+                            </p>
+                          )}
                       </div>
                     )}
                   </div>
@@ -129,20 +134,25 @@ export function AvatarStack({
         <div
           className={cn(
             sizeClasses[size],
-            offsetClasses[size],
-            'flex items-center justify-center rounded-full border-2 border-background bg-muted text-muted-foreground font-medium'
+            "flex items-center justify-center rounded-full ring-2 ring-background bg-muted text-muted-foreground font-medium"
           )}
         >
           +{remainingCount}
         </div>
       )}
     </div>
-  )
+  );
 }
 
 /**
  * Compact version for inline use
  */
-export function AvatarStackCompact({ users, max = 3 }: { users: UserInfo[]; max?: number }) {
-  return <AvatarStack users={users} max={max} size="sm" showTooltip={false} />
+export function AvatarStackCompact({
+  users,
+  max = 3,
+}: {
+  users: UserInfo[];
+  max?: number;
+}) {
+  return <AvatarStack users={users} max={max} size="sm" showTooltip={false} />;
 }

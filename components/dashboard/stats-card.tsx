@@ -1,85 +1,98 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { TrendingUp, TrendingDown } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import type { StatCardData } from '@/types/dashboard'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { TrendingUp, TrendingDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { StatCardData } from "@/types/dashboard";
 
 interface StatsCardProps {
-  stat: StatCardData
-  className?: string
+  stat: StatCardData;
+  className?: string;
 }
 
 /**
  * Stats Card Component
  *
- * Displays a single statistic with:
- * - Icon
- * - Value
- * - Label
+ * Modern stat card with:
+ * - Large icon with gradient background
+ * - Prominent value display
+ * - Label and description
  * - Optional trend indicator
- * - Color variants
+ * - Hover effects and animations
  */
 export function StatsCard({ stat, className }: StatsCardProps) {
-  const Icon = stat.icon
+  const Icon = stat.icon;
 
   const colorClasses = {
-    default: 'text-foreground',
-    primary: 'text-primary',
-    success: 'text-green-500',
-    warning: 'text-yellow-500',
-  }
+    default: "text-foreground",
+    primary: "text-primary",
+    success: "text-emerald-600 dark:text-emerald-400",
+    warning: "text-amber-600 dark:text-amber-400",
+  };
 
   const iconBgClasses = {
-    default: 'bg-primary/10 text-primary',
-    primary: 'bg-primary/10 text-primary',
-    success: 'bg-green-500/10 text-green-500',
-    warning: 'bg-yellow-500/10 text-yellow-500',
-  }
+    default:
+      "bg-gradient-to-br from-slate-500/10 to-slate-600/10 text-slate-600 dark:text-slate-400",
+    primary: "bg-gradient-to-br from-primary/10 to-primary/20 text-primary",
+    success:
+      "bg-gradient-to-br from-emerald-500/10 to-emerald-600/20 text-emerald-600 dark:text-emerald-400",
+    warning:
+      "bg-gradient-to-br from-amber-500/10 to-amber-600/20 text-amber-600 dark:text-amber-400",
+  };
 
-  const color = stat.color || 'default'
+  const color = stat.color || "default";
 
   return (
-    <Card className={cn('transition-all hover:shadow-md', className)}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {stat.label}
-        </CardTitle>
-        <div className={cn('p-2 rounded-full', iconBgClasses[color])}>
-          <Icon className="h-4 w-4" />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-1">
-          <div className="flex items-baseline gap-2">
-            <div className={cn('text-2xl font-bold', colorClasses[color])}>
-              {stat.value}
-            </div>
-            {stat.trend && (
-              <Badge
-                variant={stat.trend.isPositive ? 'default' : 'secondary'}
-                className={cn(
-                  'text-xs',
-                  stat.trend.isPositive
-                    ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20'
-                    : 'bg-red-500/10 text-red-500 hover:bg-red-500/20'
-                )}
-              >
-                {stat.trend.isPositive ? (
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                ) : (
-                  <TrendingDown className="h-3 w-3 mr-1" />
-                )}
-                {Math.abs(stat.trend.value)}%
-              </Badge>
-            )}
+    <Card
+      className={cn(
+        "transition-all hover:shadow-lg hover:scale-[1.02] border-2",
+        className
+      )}
+    >
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className={cn("p-3 rounded-xl", iconBgClasses[color])}>
+            <Icon className="h-6 w-6" />
           </div>
+          {stat.trend && (
+            <Badge
+              variant={stat.trend.isPositive ? "default" : "secondary"}
+              className={cn(
+                "text-xs font-semibold",
+                stat.trend.isPositive
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/20"
+                  : "bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 border-rose-500/20"
+              )}
+            >
+              {stat.trend.isPositive ? (
+                <TrendingUp className="h-3 w-3 mr-1" />
+              ) : (
+                <TrendingDown className="h-3 w-3 mr-1" />
+              )}
+              {Math.abs(stat.trend.value)}%
+            </Badge>
+          )}
+        </div>
+        <div className="space-y-1">
+          <div
+            className={cn(
+              "text-3xl font-bold tracking-tight",
+              colorClasses[color]
+            )}
+          >
+            {stat.value}
+          </div>
+          <p className="text-sm font-medium text-muted-foreground">
+            {stat.label}
+          </p>
           {stat.description && (
-            <p className="text-xs text-muted-foreground">{stat.description}</p>
+            <p className="text-xs text-muted-foreground/80">
+              {stat.description}
+            </p>
           )}
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 /**
@@ -88,22 +101,22 @@ export function StatsCard({ stat, className }: StatsCardProps) {
  * Displays multiple stat cards in a responsive grid
  */
 interface StatsGridProps {
-  stats: StatCardData[]
-  columns?: 2 | 3 | 4
+  stats: StatCardData[];
+  columns?: 2 | 3 | 4;
 }
 
 export function StatsGrid({ stats, columns = 4 }: StatsGridProps) {
   const gridClasses = {
-    2: 'grid-cols-1 sm:grid-cols-2',
-    3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
-    4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
-  }
+    2: "grid-cols-1 sm:grid-cols-2",
+    3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+    4: "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4",
+  };
 
   return (
-    <div className={cn('grid gap-4', gridClasses[columns])}>
+    <div className={cn("grid gap-4", gridClasses[columns])}>
       {stats.map((stat, index) => (
         <StatsCard key={index} stat={stat} />
       ))}
     </div>
-  )
+  );
 }
