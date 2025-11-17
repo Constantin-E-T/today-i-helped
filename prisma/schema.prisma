@@ -41,8 +41,9 @@ model User {
   lastSeenAt DateTime @default(now())
 
   // Relations
-  actions Action[]
-  claps   Clap[]
+  actions          Action[]
+  claps            Clap[]
+  userAchievements UserAchievement[]
 
   @@index([username])
   @@index([createdAt])
@@ -148,4 +149,46 @@ model DailyStats {
   // Unique constraint for daily or hourly stats
   @@unique([date, hour])
   @@index([date(sort: Desc)])
+}
+
+// Achievement model - defines available badges and milestones
+model Achievement {
+  id          String   @id @default(cuid())
+  key         String   @unique @db.VarChar(50) // Unique identifier like "FIRST_ACTION", "STREAK_7"
+  name        String   @db.VarChar(100)
+  description String   @db.Text
+  badgeIcon   String   @db.VarChar(50) // Lucide icon name
+  category    String   @db.VarChar(50) // STARTER, STREAK, IMPACT, CATEGORY
+  requirement Int      @default(1) // Number needed to unlock (actions, streak days, etc.)
+  order       Int      @default(0) // Display order
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userAchievements UserAchievement[]
+
+  @@index([category])
+  @@index([order])
+}
+
+// UserAchievement model - tracks which badges users have earned
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+
+  // Timestamp
+  earnedAt DateTime @default(now())
+
+  // Relations
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  // Prevent duplicate achievements
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@index([achievementId])
+  @@index([earnedAt(sort: Desc)])
 }

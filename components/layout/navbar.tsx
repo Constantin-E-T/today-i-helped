@@ -39,6 +39,7 @@ interface NavItem {
 
 const navigationItems: NavItem[] = [
   { title: "Home", href: "/", icon: Home },
+  { title: "Dashboard", href: "/dashboard", icon: Heart },
   { title: "Action Flow", href: "/action-flow", icon: Sparkles },
   { title: "Feed", href: "/feed", icon: Users },
   { title: "Achievements", href: "/achievements", icon: Trophy },
@@ -128,6 +129,12 @@ export function Navbar({ username, onSignOut }: NavbarProps) {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
+                <Link href={`/profile/${username}`} className="cursor-pointer">
+                  <Heart className="mr-2 h-4 w-4" />
+                  <span>My Profile</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link href="/settings" className="cursor-pointer">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
@@ -148,10 +155,10 @@ export function Navbar({ username, onSignOut }: NavbarProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Avatar Only - Mobile */}
-          <div className="md:hidden">
+          {/* Avatar Only - Mobile (clickable to profile) */}
+          <Link href={`/profile/${username}`} className="md:hidden">
             <UserAvatar username={username} size="sm" />
-          </div>
+          </Link>
         </div>
       </div>
     </header>
