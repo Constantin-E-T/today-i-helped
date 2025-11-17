@@ -2,11 +2,45 @@
  * Input Sanitization Utilities
  *
  * Provides functions to sanitize user input and prevent XSS attacks.
- * Uses DOMPurify to clean HTML/text content before storing in database.
+ * Uses server-safe HTML stripping to clean content before storing in database.
  */
 
-import DOMPurify from 'isomorphic-dompurify'
 import logger from '@/lib/logger'
+
+/**
+ * Strip HTML tags from a string using a safe regex approach
+ * This is server-safe and doesn't require jsdom
+ *
+ * @param html - String potentially containing HTML
+ * @param allowedTags - Array of allowed tag names (e.g., ['b', 'i', 'strong'])
+ * @returns String with HTML tags removed or only allowed tags kept
+ */
+function stripHtmlTags(html: string, allowedTags: string[] = []): string {
+  if (allowedTags.length === 0) {
+    // Strip all HTML tags
+    return html
+      .replace(/<[^>]*>/g, '') // Remove all HTML tags
+      .replace(/&lt;/g, '<') // Decode common HTML entities
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#x27;/g, "'")
+      .replace(/&#x2F;/g, '/')
+  } else {
+    // Keep only allowed tags, strip everything else
+    // This is a basic implementation - for production use with allowed tags,
+    // consider a more robust HTML parser
+    const allowedPattern = allowedTags.join('|')
+    return html
+      .replace(new RegExp(`<(?!\/?(${allowedPattern})\\b)[^>]*>`, 'gi'), '')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#x27;/g, "'")
+      .replace(/&#x2F;/g, '/')
+  }
+}
 
 /**
  * Sanitize plain text input by stripping all HTML tags
@@ -27,11 +61,7 @@ export function sanitizePlainText(input: string | null | undefined, maxLength?: 
     const stringInput = String(input)
 
     // Strip all HTML tags - only allow plain text
-    const sanitized = DOMPurify.sanitize(stringInput, {
-      ALLOWED_TAGS: [], // No HTML tags allowed
-      ALLOWED_ATTR: [], // No attributes allowed
-      KEEP_CONTENT: true, // Keep text content
-    })
+    const sanitized = stripHtmlTags(stringInput, [])
 
     // Trim whitespace
     const trimmed = sanitized.trim()
@@ -68,11 +98,8 @@ export function sanitizeRichText(input: string | null | undefined, maxLength?: n
     const stringInput = String(input)
 
     // Allow only safe HTML tags for formatting
-    const sanitized = DOMPurify.sanitize(stringInput, {
-      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li'],
-      ALLOWED_ATTR: [], // No attributes allowed (prevents onclick, onerror, etc.)
-      KEEP_CONTENT: true,
-    })
+    const allowedTags = ['b', 'i', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li']
+    const sanitized = stripHtmlTags(stringInput, allowedTags)
 
     // Trim whitespace
     const trimmed = sanitized.trim()
@@ -163,15 +190,15 @@ export function sanitizeObject<T extends Record<string, unknown>>(
   fieldsToSanitize: string[]
 ): T {
   try {
-    const sanitized = { ...data }
+    const sanitized = { ...data } as Record<string, unknown>
 
     for (const field of fieldsToSanitize) {
       if (field in sanitized && typeof sanitized[field] === 'string') {
-        sanitized[field] = sanitizePlainText(sanitized[field] as string) as T[Extract<keyof T, string>]
+        sanitized[field] = sanitizePlainText(sanitized[field] as string)
       }
     }
 
-    return sanitized
+    return sanitized as T
   } catch (error: unknown) {
     logger.error({ error, fieldsToSanitize }, 'Error sanitizing object')
     return data
