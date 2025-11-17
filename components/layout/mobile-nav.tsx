@@ -23,6 +23,7 @@ import {
   Settings,
   LogOut,
   Sparkles,
+  Heart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +45,12 @@ const navigationItems: NavItem[] = [
     href: "/",
     icon: Home,
     description: "Discover challenges to complete",
+  },
+  {
+    title: "Dashboard",
+    href: "/dashboard",
+    icon: Heart,
+    description: "Your personal journey",
   },
   {
     title: "Action Flow",
@@ -107,7 +114,7 @@ export function MobileNav({ username, onSignOut }: MobileNavProps) {
       <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0">
         {/* User Profile Header */}
         <SheetHeader className="p-6 pb-4 text-left">
-          <div className="flex items-center gap-3">
+          <Link href={`/profile/${username}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <UserAvatar username={username} size="lg" />
             <div className="flex flex-col min-w-0">
               <SheetTitle className="text-base font-semibold truncate">
@@ -117,7 +124,7 @@ export function MobileNav({ username, onSignOut }: MobileNavProps) {
                 Keep spreading kindness
               </SheetDescription>
             </div>
-          </div>
+          </Link>
         </SheetHeader>
 
         <Separator />
