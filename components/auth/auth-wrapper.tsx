@@ -208,7 +208,7 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   // Authenticated state - show navbar and children (main app)
   return (
     <>
-      <Navbar username={authState.username} />
+      <Navbar username={authState.username} onSignOut={handleSignOut} />
       {children}
     </>
   )
