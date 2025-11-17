@@ -1,25 +1,33 @@
 import { AuthWrapper } from '@/components/auth/auth-wrapper'
 import { MainLayout } from '@/components/layout/main-layout'
-import { FeedContainer } from '@/components/feed/feed-container'
+import { EnhancedFeed } from '@/components/feed/enhanced-feed'
 import { getFeedActions } from '@/app/actions/feed'
+import { getCommunityStats, getUserSpotlight } from '@/app/actions/social'
+import { getTrendingActions } from '@/app/actions/charts'
 
 /**
- * Feed Page
+ * Enhanced Feed Page
  *
- * Community feed displaying recent acts of kindness from all users.
+ * Community feed displaying recent acts of kindness with social features.
  * Features:
- * - Server Component for initial data fetch
- * - Client Component (FeedContainer) for infinite scroll and real-time updates
+ * - Community stats banner
+ * - Trending actions highlight
+ * - User spotlight
+ * - Infinite scroll and real-time updates
  * - Optimistic UI updates for claps
- * - Auto-refresh every 30 seconds
  * - Mobile-optimized layout
  */
 export default async function FeedPage() {
-  // Fetch initial actions server-side
-  const result = await getFeedActions(20, 0)
+  // Fetch all feed data in parallel
+  const [feedResult, communityResult, trendingResult, spotlightResult] = await Promise.all([
+    getFeedActions(20, 0),
+    getCommunityStats(),
+    getTrendingActions(5, 7),
+    getUserSpotlight(),
+  ])
 
   // Handle error case
-  if (!result.success) {
+  if (!feedResult.success) {
     return (
       <AuthWrapper>
         <MainLayout maxWidth="lg">
@@ -28,7 +36,7 @@ export default async function FeedPage() {
               Community Feed
             </h2>
             <p className="text-destructive text-sm">
-              {result.error || 'Failed to load feed. Please try again later.'}
+              {feedResult.error || 'Failed to load feed. Please try again later.'}
             </p>
           </div>
         </MainLayout>
@@ -50,10 +58,13 @@ export default async function FeedPage() {
             </p>
           </div>
 
-          {/* Feed Container (Client Component) */}
-          <FeedContainer
-            initialActions={result.data}
-            currentUserId={result.currentUserId}
+          {/* Enhanced Feed (Client Component) */}
+          <EnhancedFeed
+            initialActions={feedResult.data}
+            currentUserId={feedResult.currentUserId}
+            communityStats={communityResult.success ? communityResult.data : undefined}
+            trendingActions={trendingResult.success ? trendingResult.data : undefined}
+            userSpotlight={spotlightResult.success ? spotlightResult.data : undefined}
           />
         </div>
       </MainLayout>

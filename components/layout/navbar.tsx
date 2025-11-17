@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { CommandPalette } from "@/components/navigation/command-palette";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -100,6 +101,9 @@ export function Navbar({ username, onSignOut }: NavbarProps) {
 
         {/* Right Section */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Command Palette */}
+          <CommandPalette />
+
           {/* Theme Toggle - Desktop Only */}
           <div className="hidden md:block">
             <ThemeToggle />
