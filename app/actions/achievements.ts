@@ -82,9 +82,11 @@ export async function getAllAchievements(): Promise<GetAchievementsResponse> {
 
 /**
  * Get user's earned achievements with full achievement details
+ * SECURITY: Uses userId parameter (acceptable for read operations)
  */
 export async function getUserAchievements(userId: string): Promise<GetUserAchievementsResponse> {
   try {
+    // Note: userId parameter is acceptable here as it's a read-only operation
     const userAchievements = await prisma.userAchievement.findMany({
       where: { userId },
       include: {
@@ -127,11 +129,15 @@ async function getUserCategoryBreakdown(userId: string) {
 
 /**
  * Check and award achievements for a user
+ * SECURITY: Uses userId parameter (acceptable when called by other server actions with verified userId)
  * Called after actions are completed to check for new milestones
  * Returns list of newly awarded achievements
  */
 export async function checkAndAwardAchievements(userId: string): Promise<CheckAchievementsResponse> {
   try {
+    // Note: This function should only be called by other server actions
+    // (like createAction) with server-verified userId
+
     // Get user stats
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -226,10 +232,13 @@ export async function checkAndAwardAchievements(userId: string): Promise<CheckAc
 
 /**
  * Get achievement progress for a user
+ * SECURITY: Uses userId parameter (acceptable for read operations)
  * Returns all achievements with earned status and progress
  */
 export async function getAchievementProgress(userId: string) {
   try {
+    // Note: userId parameter is acceptable here as it's a read-only operation
+
     // Get all achievements
     const allAchievements = await prisma.achievement.findMany({
       orderBy: [{ category: 'asc' }, { order: 'asc' }],

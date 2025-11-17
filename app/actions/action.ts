@@ -2,12 +2,14 @@
 
 import prisma from '@/lib/prisma'
 import logger from '@/lib/logger'
+import { getCurrentUserId } from '@/lib/admin'
+import { checkRateLimitPreset } from '@/lib/rate-limit'
+import { sanitizeCustomText, sanitizeLocation } from '@/lib/sanitize'
 import { Category } from '@prisma/client'
 import type { Action } from '@prisma/client'
 
-// Type definitions for input
+// Type definitions for input (userId removed - obtained from server cookies)
 export type CreateActionInput = {
-  userId: string
   challengeId?: string
   customText?: string
   location?: string
@@ -61,6 +63,7 @@ type GetActionResponse =
 
 /**
  * Create a new completed action
+ * SECURITY: Verifies user from server-side cookies, applies rate limiting, sanitizes input
  * Uses transaction to ensure atomicity:
  * - Create action record
  * - Increment user.totalActions
@@ -70,17 +73,44 @@ export async function createAction(
   data: CreateActionInput
 ): Promise<CreateActionResponse> {
   try {
-    const { userId, challengeId, customText, location, category, completedAt, ipAddress, userAgent } = data
+    // SECURITY: Get userId from server-side cookies (never trust client)
+    const userId = await getCurrentUserId()
+    if (!userId) {
+      logger.warn({ ipAddress: data.ipAddress }, 'Unauthenticated action creation attempt')
+      return {
+        success: false,
+        error: 'Authentication required. Please log in to create an action.',
+      }
+    }
+
+    // SECURITY: Rate limiting - max 10 actions per 24 hours
+    const rateLimit = await checkRateLimitPreset(userId, 'CREATE_ACTION')
+    if (!rateLimit.allowed) {
+      logger.warn(
+        { userId, retryAfter: rateLimit.retryAfter },
+        'Rate limit exceeded for action creation'
+      )
+      return {
+        success: false,
+        error: `You've reached the maximum of ${rateLimit.limit} actions per day. Try again in ${rateLimit.retryAfter} seconds.`,
+      }
+    }
+
+    // SECURITY: Sanitize user inputs to prevent XSS
+    const sanitizedCustomText = data.customText ? sanitizeCustomText(data.customText) : undefined
+    const sanitizedLocation = data.location ? sanitizeLocation(data.location) : undefined
+
+    const { challengeId, category, completedAt, ipAddress, userAgent } = data
 
     // Use transaction for atomicity
     const action = await prisma.$transaction(async (tx) => {
-      // Create action record
+      // Create action record with server-verified userId
       const newAction = await tx.action.create({
         data: {
-          userId,
+          userId, // Server-verified userId from cookies
           challengeId,
-          customText,
-          location,
+          customText: sanitizedCustomText,
+          location: sanitizedLocation,
           category,
           completedAt,
           ipAddress,
@@ -113,6 +143,7 @@ export async function createAction(
       return newAction
     })
 
+    logger.info({ userId, actionId: action.id }, 'Action created successfully')
     return { success: true, data: action }
   } catch (error: unknown) {
     logger.error({ error, data }, 'Error in createAction function')
