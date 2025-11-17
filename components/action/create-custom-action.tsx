@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import * as React from 'react'
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+import * as React from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
+} from "@/components/ui/dialog";
 import {
   Sheet,
   SheetContent,
@@ -18,19 +18,19 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@/components/ui/sheet'
-import { Textarea } from '@/components/ui/textarea'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { createAction } from '@/app/actions/action'
-import { getUserIdFromCookie } from '@/lib/auth-cookies'
-import { Category } from '@prisma/client'
-import { CATEGORIES, VALIDATION, getCategoryConfig } from '@/lib/constants'
-import confetti from 'canvas-confetti'
-import { Loader2, Sparkles, Plus, Eye } from 'lucide-react'
-import { cn } from '@/lib/utils'
+} from "@/components/ui/sheet";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { createAction } from "@/app/actions/action";
+import { getUserIdFromCookie } from "@/lib/auth-cookies";
+import { Category } from "@prisma/client";
+import { CATEGORIES, VALIDATION, getCategoryConfig } from "@/lib/constants";
+import confetti from "canvas-confetti";
+import { Loader2, Sparkles, Plus, Eye } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 /**
  * Custom Action Creation Component
@@ -48,73 +48,76 @@ import { cn } from '@/lib/utils'
  * - Responsive (Sheet on mobile, Dialog on desktop)
  */
 export function CreateCustomAction() {
-  const [open, setOpen] = useState(false)
-  const [step, setStep] = useState<'form' | 'preview'>('form')
+  const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<"form" | "preview">("form");
 
   // Form state
-  const [category, setCategory] = useState<Category | ''>('')
-  const [description, setDescription] = useState('')
-  const [location, setLocation] = useState('')
-  const [impact, setImpact] = useState('')
+  const [category, setCategory] = useState<Category | "">("");
+  const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
+  const [impact, setImpact] = useState("");
 
   // UI state
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
     // Validate category
     if (!category) {
-      setError('Please select a category for your action.')
-      return
+      setError("Please select a category for your action.");
+      return;
     }
 
     // Validate description length
-    const trimmedDescription = description.trim()
+    const trimmedDescription = description.trim();
     if (trimmedDescription.length < VALIDATION.CUSTOM_ACTION.MIN_LENGTH) {
       setError(
         `Please write at least ${VALIDATION.CUSTOM_ACTION.MIN_LENGTH} characters to describe your action.`
-      )
-      return
+      );
+      return;
     }
 
     if (trimmedDescription.length > VALIDATION.CUSTOM_ACTION.MAX_LENGTH) {
       setError(
         `Please keep your description under ${VALIDATION.CUSTOM_ACTION.MAX_LENGTH} characters.`
-      )
-      return
+      );
+      return;
     }
 
     // Validate impact if provided
-    const trimmedImpact = impact.trim()
-    if (trimmedImpact && trimmedImpact.length < VALIDATION.IMPACT_DESCRIPTION.MIN_LENGTH) {
+    const trimmedImpact = impact.trim();
+    if (
+      trimmedImpact &&
+      trimmedImpact.length < VALIDATION.IMPACT_DESCRIPTION.MIN_LENGTH
+    ) {
       setError(
         `Impact description must be at least ${VALIDATION.IMPACT_DESCRIPTION.MIN_LENGTH} characters.`
-      )
-      return
+      );
+      return;
     }
 
     // Get user ID from cookie
-    const userId = getUserIdFromCookie()
+    const userId = getUserIdFromCookie();
     if (!userId) {
-      setError('You must be logged in to post actions.')
-      return
+      setError("You must be logged in to post actions.");
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
       // Get client-side metadata
-      const ipAddress = 'client' // In production, this would come from server
-      const userAgent = navigator.userAgent
+      const ipAddress = "client"; // In production, this would come from server
+      const userAgent = navigator.userAgent;
 
       // Construct custom text with optional fields
-      let customText = trimmedDescription
+      let customText = trimmedDescription;
       if (trimmedImpact) {
-        customText += `\n\nImpact: ${trimmedImpact}`
+        customText += `\n\nImpact: ${trimmedImpact}`;
       }
 
       // Submit action
@@ -127,49 +130,49 @@ export function CreateCustomAction() {
         completedAt: new Date(),
         ipAddress,
         userAgent,
-      })
+      });
 
       if (result.success) {
         // Success! Show celebration
-        setSuccess(true)
-        triggerConfetti()
+        setSuccess(true);
+        triggerConfetti();
 
         // Close modal after celebration
         setTimeout(() => {
-          setOpen(false)
+          setOpen(false);
           // Reset form after close animation
           setTimeout(() => {
-            resetForm()
-          }, 300)
-        }, 2500)
+            resetForm();
+          }, 300);
+        }, 2500);
       } else {
-        setError(result.error || 'Failed to submit. Please try again.')
+        setError(result.error || "Failed to submit. Please try again.");
       }
     } catch (err) {
-      setError('Something went wrong. Please try again.')
-      console.error('Error submitting custom action:', err)
+      setError("Something went wrong. Please try again.");
+      console.error("Error submitting custom action:", err);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const triggerConfetti = () => {
     // Trigger multiple confetti bursts for celebration
-    const duration = 2000
-    const animationEnd = Date.now() + duration
+    const duration = 2000;
+    const animationEnd = Date.now() + duration;
 
     const randomInRange = (min: number, max: number) => {
-      return Math.random() * (max - min) + min
-    }
+      return Math.random() * (max - min) + min;
+    };
 
     const interval = setInterval(() => {
-      const timeLeft = animationEnd - Date.now()
+      const timeLeft = animationEnd - Date.now();
 
       if (timeLeft <= 0) {
-        return clearInterval(interval)
+        return clearInterval(interval);
       }
 
-      const particleCount = 50 * (timeLeft / duration)
+      const particleCount = 50 * (timeLeft / duration);
 
       // Fire confetti from both sides
       confetti({
@@ -177,55 +180,55 @@ export function CreateCustomAction() {
         angle: randomInRange(55, 125),
         spread: randomInRange(50, 70),
         origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-        colors: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b'],
-      })
+        colors: ["#3b82f6", "#10b981", "#8b5cf6", "#f59e0b"],
+      });
       confetti({
         particleCount,
         angle: randomInRange(55, 125),
         spread: randomInRange(50, 70),
         origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
-        colors: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b'],
-      })
-    }, 250)
-  }
+        colors: ["#3b82f6", "#10b981", "#8b5cf6", "#f59e0b"],
+      });
+    }, 250);
+  };
 
   const resetForm = () => {
-    setCategory('')
-    setDescription('')
-    setLocation('')
-    setImpact('')
-    setError(null)
-    setSuccess(false)
-    setStep('form')
-  }
+    setCategory("");
+    setDescription("");
+    setLocation("");
+    setImpact("");
+    setError(null);
+    setSuccess(false);
+    setStep("form");
+  };
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!isSubmitting) {
-      setOpen(newOpen)
+      setOpen(newOpen);
       if (!newOpen) {
         // Reset form when closing
-        setTimeout(resetForm, 300)
+        setTimeout(resetForm, 300);
       }
     }
-  }
+  };
 
   const handlePreview = () => {
-    setError(null)
+    setError(null);
     // Basic validation before preview
     if (!category) {
-      setError('Please select a category first.')
-      return
+      setError("Please select a category first.");
+      return;
     }
     if (description.trim().length < VALIDATION.CUSTOM_ACTION.MIN_LENGTH) {
-      setError('Please write a description before previewing.')
-      return
+      setError("Please write a description before previewing.");
+      return;
     }
-    setStep('preview')
-  }
+    setStep("preview");
+  };
 
   const handleBackToForm = () => {
-    setStep('form')
-  }
+    setStep("form");
+  };
 
   return (
     <>
@@ -245,12 +248,14 @@ export function CreateCustomAction() {
           <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-xl">
-                {step === 'form' ? 'Create Your Own Action' : 'Preview Your Action'}
+                {step === "form"
+                  ? "Create Your Own Action"
+                  : "Preview Your Action"}
               </DialogTitle>
               <DialogDescription className="text-base">
-                {step === 'form'
-                  ? 'Share something kind you did that\'s not in our challenge list'
-                  : 'This is how your action will appear in the feed'}
+                {step === "form"
+                  ? "Share something kind you did that's not in our challenge list"
+                  : "This is how your action will appear in the feed"}
               </DialogDescription>
             </DialogHeader>
             <FormContent
@@ -291,12 +296,14 @@ export function CreateCustomAction() {
           <SheetContent side="bottom" className="h-[90vh] overflow-y-auto">
             <SheetHeader>
               <SheetTitle className="text-xl">
-                {step === 'form' ? 'Create Your Own Action' : 'Preview Your Action'}
+                {step === "form"
+                  ? "Create Your Own Action"
+                  : "Preview Your Action"}
               </SheetTitle>
               <SheetDescription className="text-base">
-                {step === 'form'
-                  ? 'Share something kind you did that\'s not in our challenge list'
-                  : 'This is how your action will appear in the feed'}
+                {step === "form"
+                  ? "Share something kind you did that's not in our challenge list"
+                  : "This is how your action will appear in the feed"}
               </SheetDescription>
             </SheetHeader>
             <div className="mt-6">
@@ -323,7 +330,7 @@ export function CreateCustomAction() {
         </Sheet>
       </div>
     </>
-  )
+  );
 }
 
 /**
@@ -331,22 +338,22 @@ export function CreateCustomAction() {
  * Extracted to prevent remounting on state changes
  */
 interface FormContentProps {
-  step: 'form' | 'preview'
-  success: boolean
-  category: Category | ''
-  setCategory: (value: Category | '') => void
-  description: string
-  setDescription: (value: string) => void
-  location: string
-  setLocation: (value: string) => void
-  impact: string
-  setImpact: (value: string) => void
-  isSubmitting: boolean
-  error: string | null
-  handleSubmit: (e: React.FormEvent) => void
-  handlePreview: () => void
-  handleBackToForm: () => void
-  handleOpenChange: (newOpen: boolean) => void
+  step: "form" | "preview";
+  success: boolean;
+  category: Category | "";
+  setCategory: (value: Category | "") => void;
+  description: string;
+  setDescription: (value: string) => void;
+  location: string;
+  setLocation: (value: string) => void;
+  impact: string;
+  setImpact: (value: string) => void;
+  isSubmitting: boolean;
+  error: string | null;
+  handleSubmit: (e: React.FormEvent) => void;
+  handlePreview: () => void;
+  handleBackToForm: () => void;
+  handleOpenChange: (newOpen: boolean) => void;
 }
 
 function FormContent({
@@ -376,10 +383,10 @@ function FormContent({
           Thank you for sharing your act of kindness with the world!
         </p>
       </div>
-    )
+    );
   }
 
-  if (step === 'preview') {
+  if (step === "preview") {
     return (
       <div className="space-y-6">
         <PreviewCard
@@ -428,7 +435,7 @@ function FormContent({
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
   // Form step
@@ -446,10 +453,10 @@ function FormContent({
               type="button"
               onClick={() => setCategory(cat.id as Category)}
               className={cn(
-                'p-3 rounded-lg border-2 transition-all text-left',
+                "p-3 rounded-lg border-2 transition-all text-left",
                 category === cat.id
                   ? `${cat.bgColor} text-white border-transparent`
-                  : 'border-border hover:border-primary bg-card'
+                  : "border-border hover:border-primary bg-card"
               )}
             >
               <div className="flex items-center gap-2">
@@ -485,7 +492,8 @@ function FormContent({
       {/* Location (Optional) */}
       <div className="space-y-2">
         <Label htmlFor="location" className="text-base font-medium">
-          Where did this happen? <span className="text-muted-foreground text-sm">(Optional)</span>
+          Where did this happen?{" "}
+          <span className="text-muted-foreground text-sm">(Optional)</span>
         </Label>
         <Input
           id="location"
@@ -500,7 +508,8 @@ function FormContent({
       {/* Impact Description (Optional) */}
       <div className="space-y-2">
         <Label htmlFor="impact" className="text-base font-medium">
-          How did this help? <span className="text-muted-foreground text-sm">(Optional)</span>
+          How did this help?{" "}
+          <span className="text-muted-foreground text-sm">(Optional)</span>
         </Label>
         <Textarea
           id="impact"
@@ -549,7 +558,7 @@ function FormContent({
         </Button>
       </div>
     </form>
-  )
+  );
 }
 
 /**
@@ -557,14 +566,19 @@ function FormContent({
  * Shows how the action will appear in the feed
  */
 interface PreviewCardProps {
-  category: Category
-  description: string
-  location: string
-  impact: string
+  category: Category;
+  description: string;
+  location: string;
+  impact: string;
 }
 
-function PreviewCard({ category, description, location, impact }: PreviewCardProps) {
-  const categoryConfig = getCategoryConfig(category)
+function PreviewCard({
+  category,
+  description,
+  location,
+  impact,
+}: PreviewCardProps) {
+  const categoryConfig = getCategoryConfig(category);
 
   return (
     <Card className="shadow-md">
@@ -575,8 +589,8 @@ function PreviewCard({ category, description, location, impact }: PreviewCardPro
               <Badge
                 className={cn(
                   categoryConfig.bgColor,
-                  'text-white',
-                  'transition-colors'
+                  "text-white",
+                  "transition-colors"
                 )}
               >
                 <span className="mr-1">{categoryConfig.icon}</span>
@@ -604,5 +618,5 @@ function PreviewCard({ category, description, location, impact }: PreviewCardPro
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
