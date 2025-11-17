@@ -10,6 +10,7 @@ import type { Category } from '@prisma/client'
 
 export interface ActionCardData {
   id: string
+  userId: string
   customText: string | null
   category: Category
   clapsCount: number
@@ -27,6 +28,7 @@ export interface ActionCardData {
 
 interface ActionCardProps {
   action: ActionCardData
+  currentUserId?: string | null
 }
 
 /**
@@ -40,8 +42,11 @@ interface ActionCardProps {
  * - Clap button with count
  * - Mobile-optimized layout
  */
-export function ActionCard({ action }: ActionCardProps) {
-  const { user, challenge, customText, category, completedAt, hasClapped, clapsCount } = action
+export function ActionCard({ action, currentUserId }: ActionCardProps) {
+  const { user, challenge, customText, category, completedAt, hasClapped, clapsCount, userId } = action
+
+  // Check if this is the current user's own action
+  const isOwnAction = currentUserId ? userId === currentUserId : false
 
   // Generate consistent avatar colors based on username
   const avatarColors = generateAvatarColors(user.username)
@@ -135,6 +140,7 @@ export function ActionCard({ action }: ActionCardProps) {
                 actionId={action.id}
                 initialClapsCount={clapsCount}
                 initialHasClapped={hasClapped}
+                isOwnAction={isOwnAction}
               />
             </div>
           </div>

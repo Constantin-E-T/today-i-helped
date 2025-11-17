@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 interface FeedContainerProps {
   initialActions: ActionCardData[]
+  currentUserId?: string | null
 }
 
 const ACTIONS_PER_PAGE = 20
@@ -24,7 +25,7 @@ const AUTO_REFRESH_INTERVAL = 30000 // 30 seconds
  * - Smooth animations for new content
  * - Loading states and error handling
  */
-export function FeedContainer({ initialActions }: FeedContainerProps) {
+export function FeedContainer({ initialActions, currentUserId }: FeedContainerProps) {
   const [actions, setActions] = useState<ActionCardData[]>(initialActions)
   const [isLoading, setIsLoading] = useState(false)
   const [hasMore, setHasMore] = useState(initialActions.length === ACTIONS_PER_PAGE)
@@ -190,7 +191,7 @@ export function FeedContainer({ initialActions }: FeedContainerProps) {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2, delay: index > 10 ? 0 : index * 0.05 }}
             >
-              <ActionCard action={action} />
+              <ActionCard action={action} currentUserId={currentUserId} />
             </motion.div>
           ))}
         </AnimatePresence>

@@ -4,6 +4,7 @@ import { getCurrentUserId } from '@/lib/admin'
 import { getRecentActions } from './action'
 import { addClap, removeClap, hasUserClapped } from './clap'
 import logger from '@/lib/logger'
+import prisma from '@/lib/prisma'
 
 /**
  * Feed Server Actions
@@ -48,6 +49,7 @@ export async function getFeedActions(limit: number = 20, offset: number = 0) {
     return {
       success: true as const,
       data: enrichedActions,
+      currentUserId,
     }
   } catch (error: unknown) {
     logger.error({ error, limit, offset }, 'Error in getFeedActions')
@@ -70,6 +72,28 @@ export async function toggleClapOnAction(actionId: string) {
       return {
         success: false as const,
         error: 'You must be logged in to clap',
+      }
+    }
+
+    // Get the action to check ownership
+    const action = await prisma.action.findUnique({
+      where: { id: actionId },
+      select: { userId: true },
+    })
+
+    if (!action) {
+      return {
+        success: false as const,
+        error: 'Action not found',
+      }
+    }
+
+    // Prevent users from clapping their own actions
+    if (action.userId === userId) {
+      logger.warn({ userId, actionId }, 'User attempted to clap own action')
+      return {
+        success: false as const,
+        error: "You can't clap your own action",
       }
     }
 
