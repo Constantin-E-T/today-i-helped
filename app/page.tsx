@@ -1,33 +1,18 @@
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { AuthWrapper } from "@/components/auth/auth-wrapper";
-import { MainLayout, Section } from "@/components/layout/main-layout";
-import { getRandomChallenge } from "@/app/actions/challenge";
-import type { Category, Difficulty } from "@prisma/client";
+import { AuthWrapper } from '@/components/auth/auth-wrapper'
+import { MainLayout, Section } from '@/components/layout/main-layout'
+import { DailyChallengeCard } from '@/components/challenge/daily-challenge'
 
-// Category color mapping
-const categoryColors: Record<Category, string> = {
-  PEOPLE: "bg-blue-500 text-white",
-  ANIMALS: "bg-green-500 text-white",
-  ENVIRONMENT: "bg-emerald-500 text-white",
-  COMMUNITY: "bg-purple-500 text-white",
-};
-
-// Difficulty color mapping
-const difficultyColors: Record<Difficulty, string> = {
-  EASY: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-  MEDIUM: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-};
-
-export default async function Home() {
-  const result = await getRandomChallenge();
-
+/**
+ * Home Page
+ *
+ * The main landing page for authenticated users.
+ * Features:
+ * - Displays today's daily challenge
+ * - Mobile-first responsive layout
+ * - Server Component for optimal performance
+ * - Proper authentication wrapping
+ */
+export default function Home() {
   return (
     <AuthWrapper>
       <MainLayout maxWidth="lg">
@@ -35,61 +20,9 @@ export default async function Home() {
           title="Your Daily Challenge"
           description="Complete today's act of kindness and make someone's day better"
         >
-          <div className="flex justify-center">
-            <Card className="w-full max-w-md">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl sm:text-3xl">Today I Helped</CardTitle>
-                <CardDescription className="text-base sm:text-lg">
-                  Small actions, big impact
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {result.success ? (
-                  <>
-                    {/* Category Badge */}
-                    <div className="flex justify-center">
-                      <span
-                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${categoryColors[result.data.category]}`}
-                      >
-                        {result.data.category}
-                      </span>
-                    </div>
-
-                    {/* Challenge Text */}
-                    <div className="text-center">
-                      <p className="text-lg sm:text-xl font-medium text-foreground leading-relaxed">
-                        {result.data.text}
-                      </p>
-                    </div>
-
-                    {/* Difficulty Badge */}
-                    <div className="flex justify-center">
-                      <span
-                        className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ${difficultyColors[result.data.difficulty]}`}
-                      >
-                        {result.data.difficulty}
-                      </span>
-                    </div>
-
-                    {/* Complete Button */}
-                    <div className="flex justify-center pt-2">
-                      <Button size="lg" disabled className="w-full sm:w-auto">
-                        Complete This Challenge
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground text-base">
-                      No challenges available at the moment. Please check back later!
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          <DailyChallengeCard />
         </Section>
       </MainLayout>
     </AuthWrapper>
-  );
+  )
 }
