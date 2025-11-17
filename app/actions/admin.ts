@@ -17,10 +17,10 @@ const CreateChallengeSchema = z.object({
     .max(500, 'Challenge text cannot exceed 500 characters')
     .transform((val) => val.trim()),
   category: z.nativeEnum(Category, {
-    errorMap: () => ({ message: 'Invalid category. Must be PEOPLE, ANIMALS, ENVIRONMENT, or COMMUNITY' }),
+    message: 'Invalid category. Must be PEOPLE, ANIMALS, ENVIRONMENT, or COMMUNITY',
   }),
   difficulty: z.nativeEnum(Difficulty, {
-    errorMap: () => ({ message: 'Invalid difficulty. Must be EASY or MEDIUM' }),
+    message: 'Invalid difficulty. Must be EASY or MEDIUM',
   }),
 })
 
@@ -33,12 +33,12 @@ const UpdateChallengeSchema = z.object({
     .optional(),
   category: z
     .nativeEnum(Category, {
-      errorMap: () => ({ message: 'Invalid category. Must be PEOPLE, ANIMALS, ENVIRONMENT, or COMMUNITY' }),
+      message: 'Invalid category. Must be PEOPLE, ANIMALS, ENVIRONMENT, or COMMUNITY',
     })
     .optional(),
   difficulty: z
     .nativeEnum(Difficulty, {
-      errorMap: () => ({ message: 'Invalid difficulty. Must be EASY or MEDIUM' }),
+      message: 'Invalid difficulty. Must be EASY or MEDIUM',
     })
     .optional(),
   isActive: z.boolean().optional(),
@@ -89,7 +89,7 @@ export async function createChallenge(data: {
     const validationResult = CreateChallengeSchema.safeParse(data)
 
     if (!validationResult.success) {
-      const firstError = validationResult.error.errors[0]
+      const firstError = validationResult.error.issues[0]
       logger.warn(
         { error: validationResult.error, adminId: admin.id },
         'Challenge creation validation failed'
@@ -172,7 +172,7 @@ export async function updateChallenge(
     const validationResult = UpdateChallengeSchema.safeParse(data)
 
     if (!validationResult.success) {
-      const firstError = validationResult.error.errors[0]
+      const firstError = validationResult.error.issues[0]
       logger.warn(
         { error: validationResult.error, adminId: admin.id, challengeId: id },
         'Challenge update validation failed'
