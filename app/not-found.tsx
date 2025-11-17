@@ -1,6 +1,9 @@
-import Link from 'next/link'
-import { Home, Heart, ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+"use client";
+
+import Link from "next/link";
+import { Home, Heart, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 /**
  * 404 Not Found Page
@@ -10,9 +13,9 @@ import { Button } from '@/components/ui/button'
  * - Friendly, encouraging messaging that fits the "kindness" theme
  * - Clear navigation options back to home
  * - Mobile-first responsive design
- * - Server Component for optimal performance
  */
 export default function NotFound() {
+  const router = useRouter();
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center space-y-8">
@@ -21,7 +24,10 @@ export default function NotFound() {
           <div className="relative">
             <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
             <div className="relative bg-primary/10 dark:bg-primary/20 rounded-full p-6 md:p-8">
-              <Heart className="size-16 md:size-20 text-primary" strokeWidth={1.5} />
+              <Heart
+                className="size-16 md:size-20 text-primary"
+                strokeWidth={1.5}
+              />
             </div>
           </div>
         </div>
@@ -54,11 +60,14 @@ export default function NotFound() {
               Go to Home
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
-            <Link href="javascript:history.back()">
-              <ArrowLeft className="size-4" />
-              Go Back
-            </Link>
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full sm:w-auto"
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className="size-4" />
+            Go Back
           </Button>
         </div>
 
@@ -70,5 +79,5 @@ export default function NotFound() {
         </div>
       </div>
     </div>
-  )
+  );
 }
