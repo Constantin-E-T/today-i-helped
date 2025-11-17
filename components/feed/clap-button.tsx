@@ -9,6 +9,7 @@ interface ClapButtonProps {
   actionId: string
   initialClapsCount: number
   initialHasClapped: boolean
+  isOwnAction?: boolean
   onClapChange?: (hasClapped: boolean, newCount: number) => void
 }
 
@@ -25,6 +26,7 @@ export function ClapButton({
   actionId,
   initialClapsCount,
   initialHasClapped,
+  isOwnAction = false,
   onClapChange,
 }: ClapButtonProps) {
   const [hasClapped, setHasClapped] = useState(initialHasClapped)
@@ -33,6 +35,9 @@ export function ClapButton({
   const [isAnimating, setIsAnimating] = useState(false)
 
   const handleClap = async () => {
+    // Prevent clapping own actions
+    if (isOwnAction) return
+
     // Prevent double-clicks during animation
     if (isPending || isAnimating) return
 
@@ -62,6 +67,19 @@ export function ClapButton({
         console.error('Failed to toggle clap:', result.error)
       }
     })
+  }
+
+  // For own actions, show non-interactive display
+  if (isOwnAction) {
+    return (
+      <div
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-muted-foreground cursor-default"
+        title="You can't clap your own action"
+      >
+        <Heart className="h-4 w-4" />
+        <span className="text-sm font-medium tabular-nums">{clapsCount}</span>
+      </div>
+    )
   }
 
   return (

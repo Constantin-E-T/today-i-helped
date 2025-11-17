@@ -51,7 +51,10 @@ export default async function FeedPage() {
           </div>
 
           {/* Feed Container (Client Component) */}
-          <FeedContainer initialActions={result.data} />
+          <FeedContainer
+            initialActions={result.data}
+            currentUserId={result.currentUserId}
+          />
         </div>
       </MainLayout>
     </AuthWrapper>
