@@ -32,6 +32,113 @@ interface SubmitActionProps {
 }
 
 /**
+ * Form Content Component
+ * Extracted to prevent remounting on state changes
+ */
+interface FormContentProps {
+  success: boolean
+  story: string
+  setStory: (value: string) => void
+  isSubmitting: boolean
+  error: string | null
+  handleSubmit: (e: React.FormEvent) => void
+  handleOpenChange: (newOpen: boolean) => void
+  MIN_LENGTH: number
+  MAX_LENGTH: number
+}
+
+function FormContent({
+  success,
+  story,
+  setStory,
+  isSubmitting,
+  error,
+  handleSubmit,
+  handleOpenChange,
+  MIN_LENGTH,
+  MAX_LENGTH,
+}: FormContentProps) {
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {success ? (
+        <div className="text-center py-8 space-y-4">
+          <div className="text-6xl animate-bounce">🎉</div>
+          <h3 className="text-2xl font-bold text-foreground">
+            Amazing Work!
+          </h3>
+          <p className="text-muted-foreground">
+            You&apos;ve made someone&apos;s day better. Thank you for spreading kindness!
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="story" className="text-base font-medium">
+              Tell us about your act of kindness
+            </Label>
+            <Textarea
+              id="story"
+              placeholder="Share your story... How did you help? How did it feel?"
+              value={story}
+              onChange={(e) => setStory(e.target.value)}
+              disabled={isSubmitting}
+              className="min-h-[120px] resize-none"
+              aria-label="Your story about completing this challenge"
+              aria-required="true"
+              aria-invalid={!!error}
+              aria-describedby={error ? 'story-error' : undefined}
+            />
+            <p className="text-xs text-muted-foreground">
+              {story.length}/{MAX_LENGTH} characters
+              {story.length < MIN_LENGTH && ` (minimum ${MIN_LENGTH})`}
+            </p>
+          </div>
+
+          {error && (
+            <div
+              id="story-error"
+              className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3"
+              role="alert"
+            >
+              {error}
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
+              disabled={isSubmitting}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting || story.trim().length < MIN_LENGTH}
+              className="flex-1 min-h-[44px]"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Complete Challenge
+                </>
+              )}
+            </Button>
+          </div>
+        </>
+      )}
+    </form>
+  )
+}
+
+/**
  * Submit Action Component
  *
  * Client Component for submitting completed challenges.
@@ -170,86 +277,6 @@ export function SubmitAction({ challenge }: SubmitActionProps) {
     }
   }
 
-  // Form content component (shared between Dialog and Sheet)
-  const FormContent = () => (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {success ? (
-        <div className="text-center py-8 space-y-4">
-          <div className="text-6xl animate-bounce">🎉</div>
-          <h3 className="text-2xl font-bold text-foreground">
-            Amazing Work!
-          </h3>
-          <p className="text-muted-foreground">
-            You&apos;ve made someone&apos;s day better. Thank you for spreading kindness!
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="space-y-2">
-            <Label htmlFor="story" className="text-base font-medium">
-              Tell us about your act of kindness
-            </Label>
-            <Textarea
-              id="story"
-              placeholder="Share your story... How did you help? How did it feel?"
-              value={story}
-              onChange={(e) => setStory(e.target.value)}
-              disabled={isSubmitting}
-              className="min-h-[120px] resize-none"
-              aria-label="Your story about completing this challenge"
-              aria-required="true"
-              aria-invalid={!!error}
-              aria-describedby={error ? 'story-error' : undefined}
-            />
-            <p className="text-xs text-muted-foreground">
-              {story.length}/{MAX_LENGTH} characters
-              {story.length < MIN_LENGTH && ` (minimum ${MIN_LENGTH})`}
-            </p>
-          </div>
-
-          {error && (
-            <div
-              id="story-error"
-              className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3"
-              role="alert"
-            >
-              {error}
-            </div>
-          )}
-
-          <div className="flex gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
-              disabled={isSubmitting}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting || story.trim().length < MIN_LENGTH}
-              className="flex-1 min-h-[44px]"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Complete Challenge
-                </>
-              )}
-            </Button>
-          </div>
-        </>
-      )}
-    </form>
-  )
-
   return (
     <>
       {/* Desktop: Dialog */}
@@ -268,7 +295,17 @@ export function SubmitAction({ challenge }: SubmitActionProps) {
                 &quot;{challenge.text}&quot;
               </DialogDescription>
             </DialogHeader>
-            <FormContent />
+            <FormContent
+              success={success}
+              story={story}
+              setStory={setStory}
+              isSubmitting={isSubmitting}
+              error={error}
+              handleSubmit={handleSubmit}
+              handleOpenChange={handleOpenChange}
+              MIN_LENGTH={MIN_LENGTH}
+              MAX_LENGTH={MAX_LENGTH}
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -290,7 +327,17 @@ export function SubmitAction({ challenge }: SubmitActionProps) {
               </SheetDescription>
             </SheetHeader>
             <div className="mt-6">
-              <FormContent />
+              <FormContent
+                success={success}
+                story={story}
+                setStory={setStory}
+                isSubmitting={isSubmitting}
+                error={error}
+                handleSubmit={handleSubmit}
+                handleOpenChange={handleOpenChange}
+                MIN_LENGTH={MIN_LENGTH}
+                MAX_LENGTH={MAX_LENGTH}
+              />
             </div>
           </SheetContent>
         </Sheet>
