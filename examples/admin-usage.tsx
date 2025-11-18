@@ -11,7 +11,7 @@
 // EXAMPLE 1: Server Component - Admin Dashboard Page
 // ============================================================================
 
-import { getCurrentUserId, isUserAdmin, getAdminUser } from '@/lib/admin'
+import { getCurrentUserId, isUserAdmin } from '@/lib/admin'
 import { getAllChallenges } from '@/app/actions/admin'
 import { redirect } from 'next/navigation'
 

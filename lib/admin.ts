@@ -43,28 +43,8 @@ export async function getCurrentUser(): Promise<User | null> {
 }
 
 /**
- * Get the admin user (first user created in the system)
- * Admin is determined by the earliest createdAt timestamp
- * Returns null if no users exist
- */
-export async function getAdminUser(): Promise<User | null> {
-  try {
-    const adminUser = await prisma.user.findFirst({
-      orderBy: {
-        createdAt: 'asc',
-      },
-    })
-
-    return adminUser
-  } catch (error: unknown) {
-    logger.error({ error }, 'Error fetching admin user')
-    return null
-  }
-}
-
-/**
- * Check if a given user ID belongs to the admin
- * Admin is the first user created in the system
+ * Check if a given user ID belongs to an admin
+ * Admin status is determined by the isAdmin flag in the database
  * @param userId - The user ID to check
  * @returns true if user is admin, false otherwise
  */
@@ -74,17 +54,20 @@ export async function isUserAdmin(userId: string): Promise<boolean> {
       return false
     }
 
-    const adminUser = await getAdminUser()
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, isAdmin: true },
+    })
 
-    if (!adminUser) {
-      logger.warn('No admin user found in system')
+    if (!user) {
+      logger.warn({ userId }, 'User not found when checking admin status')
       return false
     }
 
-    const isAdmin = adminUser.id === userId
+    const isAdmin = user.isAdmin
 
     if (isAdmin) {
-      logger.info({ userId, adminId: adminUser.id }, 'Admin access verified')
+      logger.info({ userId }, 'Admin access verified')
     }
 
     return isAdmin
