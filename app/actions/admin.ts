@@ -434,3 +434,507 @@ export async function getAllChallenges(): Promise<GetAllChallengesResponse> {
     }
   }
 }
+
+// ==================== ADMIN DASHBOARD STATS ====================
+
+type DashboardStatsResponse =
+  | {
+      success: true
+      data: {
+        totalUsers: number
+        totalActions: number
+        activeChallenges: number
+        actionsToday: number
+        newUsersToday: number
+        averageClapsPerAction: number
+        totalClaps: number
+      }
+    }
+  | { success: false; error: string }
+
+/**
+ * Get dashboard statistics (ADMIN ONLY)
+ * Returns high-level platform metrics for admin dashboard
+ */
+export async function getDashboardStats(): Promise<DashboardStatsResponse> {
+  try {
+    // Verify admin access
+    const admin = await requireAdmin()
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    // Run all queries in parallel for better performance
+    const [
+      totalUsers,
+      totalActions,
+      activeChallenges,
+      actionsToday,
+      newUsersToday,
+      clapsData,
+    ] = await Promise.all([
+      prisma.user.count(),
+      prisma.action.count(),
+      prisma.challenge.count({ where: { isActive: true } }),
+      prisma.action.count({ where: { createdAt: { gte: today } } }),
+      prisma.user.count({ where: { createdAt: { gte: today } } }),
+      prisma.action.aggregate({
+        _avg: { clapsCount: true },
+        _sum: { clapsCount: true },
+      }),
+    ])
+
+    logger.info({ adminId: admin.id }, 'Admin fetched dashboard stats')
+
+    return {
+      success: true,
+      data: {
+        totalUsers,
+        totalActions,
+        activeChallenges,
+        actionsToday,
+        newUsersToday,
+        averageClapsPerAction: clapsData._avg.clapsCount || 0,
+        totalClaps: clapsData._sum.clapsCount || 0,
+      },
+    }
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.warn({ error: error.message }, 'Admin action failed')
+      return {
+        success: false,
+        error: error.message,
+      }
+    }
+
+    logger.error({ error }, 'Error in getDashboardStats admin action')
+    return {
+      success: false,
+      error: 'Failed to fetch dashboard stats. Please try again later.',
+    }
+  }
+}
+
+// ==================== ADMIN USER MANAGEMENT ====================
+
+type GetAllUsersResponse =
+  | {
+      success: true
+      data: Array<{
+        id: string
+        username: string
+        avatarSeed: string
+        totalActions: number
+        currentStreak: number
+        longestStreak: number
+        clapsReceived: number
+        createdAt: Date
+        lastSeenAt: Date
+      }>
+    }
+  | { success: false; error: string }
+
+/**
+ * Get all users with stats (ADMIN ONLY)
+ * Returns paginated user list with statistics
+ */
+export async function getAllUsers(
+  limit = 100,
+  offset = 0
+): Promise<GetAllUsersResponse> {
+  try {
+    // Verify admin access
+    const admin = await requireAdmin()
+
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        username: true,
+        avatarSeed: true,
+        totalActions: true,
+        currentStreak: true,
+        longestStreak: true,
+        clapsReceived: true,
+        createdAt: true,
+        lastSeenAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip: offset,
+    })
+
+    logger.info(
+      { adminId: admin.id, count: users.length, limit, offset },
+      'Admin fetched users'
+    )
+
+    return { success: true, data: users }
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.warn({ error: error.message }, 'Admin action failed')
+      return {
+        success: false,
+        error: error.message,
+      }
+    }
+
+    logger.error({ error }, 'Error in getAllUsers admin action')
+    return {
+      success: false,
+      error: 'Failed to fetch users. Please try again later.',
+    }
+  }
+}
+
+type DeleteUserResponse =
+  | { success: true; data: { id: string } }
+  | { success: false; error: string }
+
+/**
+ * Delete a user permanently (ADMIN ONLY)
+ * WARNING: This is a hard delete and cannot be undone
+ * All user actions and claps will also be deleted (cascade)
+ */
+export async function deleteUser(userId: string): Promise<DeleteUserResponse> {
+  try {
+    // Verify admin access
+    const admin = await requireAdmin()
+
+    // Validate user ID
+    const idValidation = z.string().min(1).safeParse(userId)
+    if (!idValidation.success) {
+      return {
+        success: false,
+        error: 'Invalid user ID',
+      }
+    }
+
+    // Prevent admin from deleting themselves
+    if (userId === admin.id) {
+      logger.warn({ adminId: admin.id }, 'Admin attempted to delete themselves')
+      return {
+        success: false,
+        error: 'Cannot delete your own admin account',
+      }
+    }
+
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    })
+
+    if (!existingUser) {
+      logger.warn({ userId, adminId: admin.id }, 'User not found for deletion')
+      return {
+        success: false,
+        error: 'User not found',
+      }
+    }
+
+    // Delete user (cascading will handle related data)
+    await prisma.user.delete({
+      where: { id: userId },
+    })
+
+    logger.info(
+      {
+        userId,
+        adminId: admin.id,
+        username: existingUser.username,
+      },
+      'Admin deleted user'
+    )
+
+    // Revalidate pages that display users
+    revalidatePath('/admin/users')
+    revalidatePath('/feed')
+
+    return { success: true, data: { id: userId } }
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.warn({ error: error.message }, 'Admin action failed')
+      return {
+        success: false,
+        error: error.message,
+      }
+    }
+
+    logger.error({ error, userId }, 'Error in deleteUser admin action')
+    return {
+      success: false,
+      error: 'Failed to delete user. Please try again later.',
+    }
+  }
+}
+
+// ==================== ADMIN ANALYTICS ====================
+
+type GetAnalyticsDataResponse =
+  | {
+      success: true
+      data: {
+        dailyStats: Array<{
+          date: Date
+          totalActions: number
+          peopleActions: number
+          animalsActions: number
+          environmentActions: number
+          communityActions: number
+        }>
+        categoryBreakdown: {
+          PEOPLE: number
+          ANIMALS: number
+          ENVIRONMENT: number
+          COMMUNITY: number
+        }
+        topChallenges: Array<{
+          id: string
+          text: string
+          timesUsed: number
+          averageClaps: number
+        }>
+      }
+    }
+  | { success: false; error: string }
+
+/**
+ * Get analytics data for charts and reports (ADMIN ONLY)
+ * Returns daily stats, category breakdown, and top challenges
+ */
+export async function getAnalyticsData(
+  days = 30
+): Promise<GetAnalyticsDataResponse> {
+  try {
+    // Verify admin access
+    const admin = await requireAdmin()
+
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - days)
+    startDate.setHours(0, 0, 0, 0)
+
+    // Fetch daily stats
+    const dailyStats = await prisma.dailyStats.findMany({
+      where: {
+        date: { gte: startDate },
+        hour: null, // Only get daily aggregates, not hourly
+      },
+      orderBy: { date: 'asc' },
+      select: {
+        date: true,
+        totalActions: true,
+        peopleActions: true,
+        animalsActions: true,
+        environmentActions: true,
+        communityActions: true,
+      },
+    })
+
+    // Get category breakdown
+    const actions = await prisma.action.groupBy({
+      by: ['category'],
+      _count: { category: true },
+    })
+
+    const categoryBreakdown = {
+      PEOPLE: 0,
+      ANIMALS: 0,
+      ENVIRONMENT: 0,
+      COMMUNITY: 0,
+    }
+
+    actions.forEach((action) => {
+      categoryBreakdown[action.category] = action._count.category
+    })
+
+    // Get top challenges
+    const topChallenges = await prisma.challenge.findMany({
+      where: { isActive: true },
+      orderBy: [{ timesUsed: 'desc' }, { averageClaps: 'desc' }],
+      take: 10,
+      select: {
+        id: true,
+        text: true,
+        timesUsed: true,
+        averageClaps: true,
+      },
+    })
+
+    logger.info({ adminId: admin.id, days }, 'Admin fetched analytics data')
+
+    return {
+      success: true,
+      data: {
+        dailyStats,
+        categoryBreakdown,
+        topChallenges,
+      },
+    }
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.warn({ error: error.message }, 'Admin action failed')
+      return {
+        success: false,
+        error: error.message,
+      }
+    }
+
+    logger.error({ error }, 'Error in getAnalyticsData admin action')
+    return {
+      success: false,
+      error: 'Failed to fetch analytics data. Please try again later.',
+    }
+  }
+}
+
+// ==================== ADMIN CONTENT MODERATION ====================
+
+type GetRecentActionsResponse =
+  | {
+      success: true
+      data: Array<{
+        id: string
+        customText: string | null
+        category: Category
+        clapsCount: number
+        completedAt: Date
+        user: {
+          id: string
+          username: string
+        }
+        challenge: {
+          id: string
+          text: string
+        } | null
+      }>
+    }
+  | { success: false; error: string }
+
+/**
+ * Get recent actions for moderation (ADMIN ONLY)
+ * Returns recent actions with user and challenge details
+ */
+export async function getRecentActions(
+  limit = 50
+): Promise<GetRecentActionsResponse> {
+  try {
+    // Verify admin access
+    const admin = await requireAdmin()
+
+    const actions = await prisma.action.findMany({
+      orderBy: { completedAt: 'desc' },
+      take: limit,
+      select: {
+        id: true,
+        customText: true,
+        category: true,
+        clapsCount: true,
+        completedAt: true,
+        user: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
+        challenge: {
+          select: {
+            id: true,
+            text: true,
+          },
+        },
+      },
+    })
+
+    logger.info({ adminId: admin.id, count: actions.length }, 'Admin fetched recent actions')
+
+    return { success: true, data: actions }
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.warn({ error: error.message }, 'Admin action failed')
+      return {
+        success: false,
+        error: error.message,
+      }
+    }
+
+    logger.error({ error }, 'Error in getRecentActions admin action')
+    return {
+      success: false,
+      error: 'Failed to fetch recent actions. Please try again later.',
+    }
+  }
+}
+
+type DeleteActionResponse =
+  | { success: true; data: { id: string } }
+  | { success: false; error: string }
+
+/**
+ * Delete an action permanently (ADMIN ONLY)
+ * Use this for content moderation to remove inappropriate actions
+ */
+export async function deleteAction(actionId: string): Promise<DeleteActionResponse> {
+  try {
+    // Verify admin access
+    const admin = await requireAdmin()
+
+    // Validate action ID
+    const idValidation = z.string().min(1).safeParse(actionId)
+    if (!idValidation.success) {
+      return {
+        success: false,
+        error: 'Invalid action ID',
+      }
+    }
+
+    // Check if action exists
+    const existingAction = await prisma.action.findUnique({
+      where: { id: actionId },
+      include: {
+        user: { select: { id: true, username: true } },
+      },
+    })
+
+    if (!existingAction) {
+      logger.warn({ actionId, adminId: admin.id }, 'Action not found for deletion')
+      return {
+        success: false,
+        error: 'Action not found',
+      }
+    }
+
+    // Delete action (cascading will handle related claps)
+    await prisma.action.delete({
+      where: { id: actionId },
+    })
+
+    logger.info(
+      {
+        actionId,
+        adminId: admin.id,
+        userId: existingAction.user.id,
+        username: existingAction.user.username,
+      },
+      'Admin deleted action for moderation'
+    )
+
+    // Revalidate feed and user profile
+    revalidatePath('/feed')
+    revalidatePath(`/profile/${existingAction.user.id}`)
+
+    return { success: true, data: { id: actionId } }
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.warn({ error: error.message }, 'Admin action failed')
+      return {
+        success: false,
+        error: error.message,
+      }
+    }
+
+    logger.error({ error, actionId }, 'Error in deleteAction admin action')
+    return {
+      success: false,
+      error: 'Failed to delete action. Please try again later.',
+    }
+  }
+}
