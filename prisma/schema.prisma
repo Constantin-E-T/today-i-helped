@@ -30,6 +30,9 @@ model User {
   avatarSeed   String  @db.VarChar(100)
   recoveryCode String? @unique @db.VarChar(14) // Format: XXXX-XXXX-XXXX
 
+  // Admin flag
+  isAdmin Boolean @default(false)
+
   // Stats
   totalActions  Int @default(0)
   currentStreak Int @default(0)
@@ -48,6 +51,7 @@ model User {
   @@index([username])
   @@index([createdAt])
   @@index([recoveryCode])
+  @@index([isAdmin])
 }
 
 // Challenge model for daily actions

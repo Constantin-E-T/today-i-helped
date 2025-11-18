@@ -938,3 +938,300 @@ export async function deleteAction(actionId: string): Promise<DeleteActionRespon
     }
   }
 }
+
+// ==================== ADMIN USER PROMOTION ====================
+
+type PromoteUserToAdminResponse =
+  | { success: true; data: { userId: string; username: string } }
+  | { success: false; error: string }
+
+/**
+ * Promote a user to admin status (ADMIN ONLY)
+ * Only existing admins can promote other users
+ * @param userId - The ID of the user to promote
+ * @returns Success with user data or error
+ */
+export async function promoteUserToAdmin(userId: string): Promise<PromoteUserToAdminResponse> {
+  try {
+    // Verify admin access
+    const admin = await requireAdmin()
+
+    // Validate user ID
+    const idValidation = z.string().min(1).safeParse(userId)
+    if (!idValidation.success) {
+      return {
+        success: false,
+        error: 'Invalid user ID',
+      }
+    }
+
+    // Check if target user exists
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, username: true, isAdmin: true },
+    })
+
+    if (!targetUser) {
+      logger.warn({ userId, adminId: admin.id }, 'User not found for admin promotion')
+      return {
+        success: false,
+        error: 'User not found',
+      }
+    }
+
+    // Check if user is already an admin
+    if (targetUser.isAdmin) {
+      logger.info({ userId, adminId: admin.id }, 'User is already an admin')
+      return {
+        success: false,
+        error: 'User is already an admin',
+      }
+    }
+
+    // Promote user to admin
+    await prisma.user.update({
+      where: { id: userId },
+      data: { isAdmin: true },
+    })
+
+    logger.info(
+      {
+        userId,
+        username: targetUser.username,
+        promotedBy: admin.id,
+        promotedByUsername: admin.username,
+      },
+      'User promoted to admin'
+    )
+
+    // Revalidate admin pages
+    revalidatePath('/admin')
+    revalidatePath('/admin/users')
+
+    return {
+      success: true,
+      data: {
+        userId: targetUser.id,
+        username: targetUser.username,
+      },
+    }
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.warn({ error: error.message }, 'Admin action failed')
+      return {
+        success: false,
+        error: error.message,
+      }
+    }
+
+    logger.error({ error, userId }, 'Error in promoteUserToAdmin admin action')
+    return {
+      success: false,
+      error: 'Failed to promote user to admin. Please try again later.',
+    }
+  }
+}
+
+type RevokeAdminAccessResponse =
+  | { success: true; data: { userId: string; username: string } }
+  | { success: false; error: string }
+
+/**
+ * Revoke admin access from a user (ADMIN ONLY)
+ * Admins cannot revoke their own admin access (prevents lockout)
+ * @param userId - The ID of the user to demote
+ * @returns Success with user data or error
+ */
+export async function revokeAdminAccess(userId: string): Promise<RevokeAdminAccessResponse> {
+  try {
+    // Verify admin access
+    const admin = await requireAdmin()
+
+    // Validate user ID
+    const idValidation = z.string().min(1).safeParse(userId)
+    if (!idValidation.success) {
+      return {
+        success: false,
+        error: 'Invalid user ID',
+      }
+    }
+
+    // Prevent self-revocation (admin lockout protection)
+    if (userId === admin.id) {
+      logger.warn({ adminId: admin.id }, 'Admin attempted to revoke their own admin access')
+      return {
+        success: false,
+        error: 'Cannot revoke your own admin access. Ask another admin to do this.',
+      }
+    }
+
+    // Check if target user exists
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, username: true, isAdmin: true },
+    })
+
+    if (!targetUser) {
+      logger.warn({ userId, adminId: admin.id }, 'User not found for admin revocation')
+      return {
+        success: false,
+        error: 'User not found',
+      }
+    }
+
+    // Check if user is actually an admin
+    if (!targetUser.isAdmin) {
+      logger.info({ userId, adminId: admin.id }, 'User is not an admin')
+      return {
+        success: false,
+        error: 'User is not an admin',
+      }
+    }
+
+    // Revoke admin access
+    await prisma.user.update({
+      where: { id: userId },
+      data: { isAdmin: false },
+    })
+
+    logger.info(
+      {
+        userId,
+        username: targetUser.username,
+        revokedBy: admin.id,
+        revokedByUsername: admin.username,
+      },
+      'Admin access revoked from user'
+    )
+
+    // Revalidate admin pages
+    revalidatePath('/admin')
+    revalidatePath('/admin/users')
+
+    return {
+      success: true,
+      data: {
+        userId: targetUser.id,
+        username: targetUser.username,
+      },
+    }
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.warn({ error: error.message }, 'Admin action failed')
+      return {
+        success: false,
+        error: error.message,
+      }
+    }
+
+    logger.error({ error, userId }, 'Error in revokeAdminAccess admin action')
+    return {
+      success: false,
+      error: 'Failed to revoke admin access. Please try again later.',
+    }
+  }
+}
+
+// ==================== ADMIN SETTINGS MANAGEMENT ====================
+
+type PlatformSettings = {
+  siteName: string
+  maintenanceMode: boolean
+  allowNewUsers: boolean
+  maxActionsPerDay: number
+  requireEmailVerification: boolean
+}
+
+type GetPlatformSettingsResponse =
+  | { success: true; data: PlatformSettings }
+  | { success: false; error: string }
+
+type UpdatePlatformSettingsResponse =
+  | { success: true; data: PlatformSettings }
+  | { success: false; error: string }
+
+/**
+ * Get platform-wide settings (ADMIN ONLY)
+ * Returns current platform configuration
+ */
+export async function getPlatformSettings(): Promise<GetPlatformSettingsResponse> {
+  try {
+    // Verify admin access
+    await requireAdmin()
+
+    // For now, return hardcoded settings
+    // In production, these would come from a database table or config file
+    const settings: PlatformSettings = {
+      siteName: 'Today I Helped',
+      maintenanceMode: false,
+      allowNewUsers: true,
+      maxActionsPerDay: 10,
+      requireEmailVerification: false,
+    }
+
+    return {
+      success: true,
+      data: settings,
+    }
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return {
+        success: false,
+        error: error.message,
+      }
+    }
+
+    logger.error({ error }, 'Error in getPlatformSettings admin action')
+    return {
+      success: false,
+      error: 'Failed to fetch platform settings. Please try again later.',
+    }
+  }
+}
+
+/**
+ * Update platform-wide settings (ADMIN ONLY)
+ * Modifies platform configuration
+ */
+export async function updatePlatformSettings(
+  settings: Partial<PlatformSettings>
+): Promise<UpdatePlatformSettingsResponse> {
+  try {
+    // Verify admin access
+    const admin = await requireAdmin()
+
+    // For now, just log the update
+    // In production, these would be saved to a database table or config file
+    logger.info(
+      { adminId: admin.id, settings },
+      'Admin updated platform settings (not persisted yet)'
+    )
+
+    // Return the updated settings
+    const updatedSettings: PlatformSettings = {
+      siteName: settings.siteName || 'Today I Helped',
+      maintenanceMode: settings.maintenanceMode || false,
+      allowNewUsers: settings.allowNewUsers ?? true,
+      maxActionsPerDay: settings.maxActionsPerDay || 10,
+      requireEmailVerification: settings.requireEmailVerification || false,
+    }
+
+    return {
+      success: true,
+      data: updatedSettings,
+    }
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return {
+        success: false,
+        error: error.message,
+      }
+    }
+
+    logger.error({ error, settings }, 'Error in updatePlatformSettings admin action')
+    return {
+      success: false,
+      error: 'Failed to update platform settings. Please try again later.',
+    }
+  }
+}
