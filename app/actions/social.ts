@@ -174,7 +174,7 @@ export async function getUserSpotlight() {
     weekAgo.setDate(weekAgo.getDate() - 7)
 
     // Find user with most actions this week
-    const spotlightUser = await prisma.user.findFirst({
+    let spotlightUser = await prisma.user.findFirst({
       where: {
         actions: {
           some: {
@@ -211,6 +211,36 @@ export async function getUserSpotlight() {
       },
     })
 
+    // If no users with actions this week, find user with most total actions
+    if (!spotlightUser) {
+      spotlightUser = await prisma.user.findFirst({
+        where: {
+          totalActions: {
+            gt: 0,
+          },
+        },
+        include: {
+          _count: {
+            select: {
+              actions: true,
+            },
+          },
+          userAchievements: {
+            include: {
+              achievement: true,
+            },
+            orderBy: {
+              earnedAt: 'desc',
+            },
+            take: 1,
+          },
+        },
+        orderBy: {
+          totalActions: 'desc',
+        },
+      })
+    }
+
     if (!spotlightUser) {
       return {
         success: false,
@@ -228,6 +258,12 @@ export async function getUserSpotlight() {
     })
 
     const categoriesHelped = categoryBreakdown.length
+    
+    // Determine the highlight reason based on recent activity
+    const actionsThisWeek = spotlightUser._count.actions || 0
+    const highlightReason = actionsThisWeek > 0
+      ? `Completed ${actionsThisWeek} action${actionsThisWeek !== 1 ? 's' : ''} this week!`
+      : `${spotlightUser.totalActions} total actions shared!`
 
     const data: UserSpotlightData = {
       user: {
@@ -237,7 +273,7 @@ export async function getUserSpotlight() {
         totalActions: spotlightUser.totalActions,
         currentStreak: spotlightUser.currentStreak,
       },
-      highlightReason: `Completed ${spotlightUser._count.actions} actions this week!`,
+      highlightReason,
       stats: {
         totalActions: spotlightUser.totalActions,
         currentStreak: spotlightUser.currentStreak,

@@ -116,7 +116,7 @@ export function EnhancedFeed({
         >
           <UserSpotlight
             data={userSpotlight}
-            onViewProfile={(userId) => router.push(`/profile/${userId}`)}
+            onViewProfile={(username) => router.push(`/profile/${username}`)}
             variant="compact"
           />
         </motion.div>

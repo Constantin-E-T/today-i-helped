@@ -10,7 +10,7 @@ import type { UserSpotlightData } from '@/types/social'
 
 interface UserSpotlightProps {
   data: UserSpotlightData
-  onViewProfile?: (userId: string) => void
+  onViewProfile?: (username: string) => void
   variant?: 'default' | 'compact'
 }
 
@@ -31,7 +31,7 @@ export function UserSpotlight({ data, onViewProfile, variant = 'default' }: User
 
   const handleViewProfile = () => {
     if (onViewProfile) {
-      onViewProfile(data.user.id)
+      onViewProfile(data.user.username)
     }
   }
 
