@@ -258,7 +258,7 @@ export async function getUserSpotlight() {
     })
 
     const categoriesHelped = categoryBreakdown.length
-    
+
     // Determine the highlight reason based on recent activity
     const actionsThisWeek = spotlightUser._count.actions || 0
     const highlightReason = actionsThisWeek > 0
@@ -281,9 +281,9 @@ export async function getUserSpotlight() {
       },
       recentAchievement: spotlightUser.userAchievements[0]
         ? {
-            name: spotlightUser.userAchievements[0].achievement.name,
-            badgeIcon: spotlightUser.userAchievements[0].achievement.badgeIcon,
-          }
+          name: spotlightUser.userAchievements[0].achievement.name,
+          badgeIcon: spotlightUser.userAchievements[0].achievement.badgeIcon,
+        }
         : undefined,
     }
 
