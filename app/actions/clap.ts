@@ -31,9 +31,10 @@ export async function addClap(
   actionId: string,
   userIdParam?: string // Parameter kept for backward compatibility but NOT USED
 ): Promise<AddClapResponse> {
+  // SECURITY: Get userId from server-side cookies (never trust client parameter)
+  const userId = await getCurrentUserId()
+
   try {
-    // SECURITY: Get userId from server-side cookies (never trust client parameter)
-    const userId = await getCurrentUserId()
     if (!userId) {
       logger.warn({ actionId }, 'Unauthenticated clap attempt')
       return {
@@ -128,9 +129,10 @@ export async function removeClap(
   actionId: string,
   userIdParam?: string // Parameter kept for backward compatibility but NOT USED
 ): Promise<RemoveClapResponse> {
+  // SECURITY: Get userId from server-side cookies (never trust client parameter)
+  const userId = await getCurrentUserId()
+
   try {
-    // SECURITY: Get userId from server-side cookies (never trust client parameter)
-    const userId = await getCurrentUserId()
     if (!userId) {
       logger.warn({ actionId }, 'Unauthenticated unclap attempt')
       return {

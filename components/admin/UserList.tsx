@@ -124,7 +124,7 @@ export default function UserList({ users: initialUsers, currentAdminId }: UserLi
                     </TableCell>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
-                        <UserAvatar username={user.username} avatarSeed={user.avatarSeed} size="sm" />
+                        <UserAvatar username={user.username} size="sm" />
                         <div className="flex items-center gap-2">
                           <span>{user.username}</span>
                           {isCurrentAdmin && (

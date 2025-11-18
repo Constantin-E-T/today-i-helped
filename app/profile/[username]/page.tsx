@@ -61,7 +61,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       };
 
   return (
-    <MainLayout maxWidth="7xl">
+    <MainLayout maxWidth="6xl">
       <div className="space-y-6">
         {/* Back Navigation */}
         <div className="flex items-center justify-between gap-4 flex-wrap">

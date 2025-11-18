@@ -42,7 +42,7 @@ export default async function AchievementsPage() {
     );
   }
 
-  const achievements = result.data;
+  const achievements = result.data || [];
 
   // Count earned achievements
   const earnedCount = achievements.filter((a) => a.isEarned).length;

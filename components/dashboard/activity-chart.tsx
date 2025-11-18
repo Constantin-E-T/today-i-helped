@@ -133,7 +133,7 @@ export function ActivityChart({
                 cy="50%"
                 labelLine={false}
                 label={({ name, percent }) =>
-                  percent > 0.05
+                  name && percent && percent > 0.05
                     ? `${name.split(" ")[0]} ${(percent * 100).toFixed(0)}%`
                     : ""
                 }

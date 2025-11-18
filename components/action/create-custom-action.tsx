@@ -122,7 +122,6 @@ export function CreateCustomAction() {
 
       // Submit action
       const result = await createAction({
-        userId,
         challengeId: undefined, // No challenge ID for custom actions
         customText,
         location: location.trim() || undefined,

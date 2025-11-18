@@ -116,14 +116,14 @@ export default async function DashboardPage() {
 
   // Get in-progress achievements (not earned yet, with progress > 0)
   const inProgressAchievements = achievementProgressResult.success
-    ? achievementProgressResult.data.filter(
+    ? (achievementProgressResult.data || []).filter(
         (a) => !a.isEarned && a.currentProgress > 0
       )
     : [];
 
   return (
     <AuthWrapper>
-      <MainLayout maxWidth="7xl">
+      <MainLayout maxWidth="6xl">
         <div className="space-y-6">
           {/* Back Navigation */}
           <div>

@@ -70,7 +70,7 @@ interface FormContentProps {
   isPending: boolean;
   isCodeComplete: boolean;
   canSubmit: boolean;
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSubmit: (e: React.FormEvent) => void;
   onOpenChange: (open: boolean) => void;

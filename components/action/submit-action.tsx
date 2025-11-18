@@ -194,7 +194,6 @@ export function SubmitAction({ challenge }: SubmitActionProps) {
 
       // Submit action
       const result = await createAction({
-        userId,
         challengeId: challenge.id,
         customText: story.trim(),
         category: challenge.category,

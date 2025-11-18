@@ -184,7 +184,6 @@ export function EnhancedActionForm() {
 
       // Submit action
       const result = await createAction({
-        userId,
         challengeId: mode === 'challenge' ? selectedChallenge?.id : undefined,
         customText: description.trim(),
         location: location.trim() || undefined,

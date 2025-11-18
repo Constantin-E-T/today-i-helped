@@ -2,6 +2,7 @@
 
 import prisma from '@/lib/prisma'
 import logger from '@/lib/logger'
+import { getCurrentUserId } from '@/lib/admin'
 import { Category } from '@prisma/client'
 import type { ActivityChartData, CategoryChartData } from '@/types/dashboard'
 
@@ -190,6 +191,7 @@ export async function getGlobalActivityChartData(days: number = 30) {
  */
 export async function getTrendingActions(limit: number = 10, days: number = 7) {
   try {
+    const currentUserId = await getCurrentUserId()
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
 
@@ -204,6 +206,7 @@ export async function getTrendingActions(limit: number = 10, days: number = 7) {
           select: {
             id: true,
             username: true,
+            avatarSeed: true,
           },
         },
         challenge: {
@@ -212,6 +215,16 @@ export async function getTrendingActions(limit: number = 10, days: number = 7) {
             category: true,
           },
         },
+        claps: currentUserId
+          ? {
+              where: {
+                userId: currentUserId,
+              },
+              select: {
+                id: true,
+              },
+            }
+          : false,
         _count: {
           select: {
             claps: true,
@@ -226,7 +239,23 @@ export async function getTrendingActions(limit: number = 10, days: number = 7) {
       take: limit,
     })
 
-    return { success: true, data: trendingActions }
+    // Transform the data to match ActionCardData interface
+    const formattedActions = trendingActions.map((action) => ({
+      id: action.id,
+      userId: action.userId,
+      customText: action.customText,
+      category: action.category,
+      clapsCount: action._count.claps,
+      completedAt: action.completedAt,
+      hasClapped: Array.isArray(action.claps) && action.claps.length > 0,
+      user: {
+        username: action.user.username,
+        avatarSeed: action.user.avatarSeed,
+      },
+      challenge: action.challenge,
+    }))
+
+    return { success: true, data: formattedActions }
   } catch (error: unknown) {
     logger.error({ error, limit, days }, 'Error in getTrendingActions')
     return {

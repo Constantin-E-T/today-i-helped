@@ -28,7 +28,7 @@ interface AuthWrapperProps {
 type AuthState =
   | { status: 'loading' }
   | { status: 'unauthenticated' }
-  | { status: 'new-user'; userId: string; username: string; recoveryCode: string }
+  | { status: 'new-user'; userId: string; username: string; recoveryCode: string | null }
   | { status: 'authenticated'; userId: string; username: string }
 
 /**
@@ -194,6 +194,15 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
 
   // New user state - show recovery code
   if (authState.status === 'new-user') {
+    // Ensure recovery code exists (it should always exist for new users)
+    if (!authState.recoveryCode) {
+      return (
+        <div className="flex min-h-screen items-center justify-center p-4">
+          <p className="text-destructive">Error: Recovery code missing. Please try again.</p>
+        </div>
+      )
+    }
+
     return (
       <div className="flex min-h-screen items-center justify-center p-4 sm:p-8">
         <RecoveryCodeDisplay
